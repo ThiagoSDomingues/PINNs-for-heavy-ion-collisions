@@ -1,4 +1,5 @@
 # Author: OptimusThi
+# Code: heat propagation in a metal rod (heat equation in 1D)
 
 import torch
 import torch.nn as nn
