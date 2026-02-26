@@ -34,3 +34,18 @@ class PINN(nn.Module):
     
         residual = u_t - alpha * u_xx
         return torch.mean(residual**2)
+
+    # 3. Training Setup
+    model = PINN()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    mse = nn.MSELoss()
+
+    # Data Generation (Collocation points)
+    x_col = torch.rand(2000, 1)
+    t_col = torch.rand(2000, 1)
+
+    # Boundary/Initial Conditions (IC/BC)
+    x_ic = torch.rand(500, 1)
+    t_ic = torch.zeros(500, 1)
+    u_ic = torch.sin(np.pi * x_ic) # IC: u(x,0) = sin(pi*x)
+
