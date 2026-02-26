@@ -72,9 +72,8 @@ for epoch in range(epochs):
     total_loss = loss_p + loss_ic + loss_bc
     total_loss.backward()
     optimizer.step()
-
-# 5. Visualizing the Result
     
     if epoch % 500 == 0:
         print(f"Epoch {epoch}: Loss = {total_loss.item():.6f}")
     
+# 5. Visualizing the Result
