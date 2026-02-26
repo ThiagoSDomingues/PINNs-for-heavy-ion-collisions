@@ -49,3 +49,8 @@ x_ic = torch.rand(500, 1)
 t_ic = torch.zeros(500, 1)
 u_ic = torch.sin(np.pi * x_ic) # IC: u(x,0) = sin(pi*x)
 
+x_bc = torch.cat([torch.zeros(250, 1), torch.ones(250, 1)], dim=0)
+t_bc = torch.rand(500, 1)
+u_bc = torch.zeros(500, 1) # BC: u(0,t) = u(1,t) = 0
+
+# Training Loop
