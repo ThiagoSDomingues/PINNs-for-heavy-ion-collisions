@@ -5,7 +5,7 @@ This implementation solves the Israel-Stewart equations for relativistic viscous
 hydrodynamics in 1+1 dimensions and compares the effective diffusion coefficient 
 with BDNK theory.
 
-Author: Research Tutorial
+Author: OptimusThi
 Date: February 2026
 """
 
