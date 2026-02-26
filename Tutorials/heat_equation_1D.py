@@ -53,4 +53,26 @@ x_bc = torch.cat([torch.zeros(250, 1), torch.ones(250, 1)], dim=0)
 t_bc = torch.rand(500, 1)
 u_bc = torch.zeros(500, 1) # BC: u(0,t) = u(1,t) = 0
 
-# Training Loop
+# 4. Training Loop
+epochs = 5000
+for epoch in range(epochs):
+    optimizer.zero_grad()
+    
+    # Loss 1: Physics Residual
+    loss_p = physics_loss(model, x_col, t_col)
+    
+    # Loss 2: Initial Condition
+    u_ic_pred = model(x_ic, t_ic)
+    loss_ic = mse(u_ic_pred, u_ic)
+    
+    # Loss 3: Boundary Condition
+    u_bc_pred = model(x_bc, t_bc)
+    loss_bc = mse(u_bc_pred, u_bc)
+    
+    total_loss = loss_p + loss_ic + loss_bc
+    total_loss.backward()
+    optimizer.step()
+    
+    if epoch % 500 == 0:
+        print(f"Epoch {epoch}: Loss = {total_loss.item():.6f}")
+    
