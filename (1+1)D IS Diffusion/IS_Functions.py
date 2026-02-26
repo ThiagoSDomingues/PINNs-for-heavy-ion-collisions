@@ -26,6 +26,7 @@ def gamma_func(v):
         v = torch.tensor(v, dtype=torch.float64, device=device)
     return 1.0 / torch.sqrt(1 - v**2)
 
+### QCD thermodynamics
 # alpha = mu / T -> chemical potential divided by temperature
 def alpha_from_n_func(n, T):
     a = T**3 * N_c * N_f
