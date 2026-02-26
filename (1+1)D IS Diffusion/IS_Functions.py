@@ -47,3 +47,12 @@ def n_from_alpha_func(alpha, T):
     term1 = alpha / 27
     term2 = (alpha ** 3) / (243 * torch.pi ** 2)
     return N_c * N_f * T**3 * (term1 + term2)
+
+# Israel-Stewart coefficients for diffusion
+def kappa_func(alpha, T):
+    # Diffusion conductivity
+    return sigma_func(alpha, T)  # or redefine
+
+def tau_V_func(alpha, T):
+    # Relaxation time
+    return 1.0 / (2.0 * torch.pi * T)  # example choice
