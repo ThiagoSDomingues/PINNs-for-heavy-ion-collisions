@@ -22,30 +22,30 @@ class PINN(nn.Module):
         u = self.net(torch.cat([x, t], dim=1))
         return u
 
-    def physics_loss(model, x, t, alpha=0.01):
-        x.requires_grad_(True)
-        t.requires_grad_(True)
-        u = model(x, t)
+def physics_loss(model, x, t, alpha=0.01):
+    x.requires_grad_(True)
+    t.requires_grad_(True)
+    u = model(x, t)
     
-        # Calculate derivatives
-        u_t = torch.autograd.grad(u, t, torch.ones_like(u), create_graph=True)[0]
-        u_x = torch.autograd.grad(u, x, torch.ones_like(u), create_graph=True)[0]
-        u_xx = torch.autograd.grad(u_x, x, torch.ones_like(u_x), create_graph=True)[0]
+    # Calculate derivatives
+    u_t = torch.autograd.grad(u, t, torch.ones_like(u), create_graph=True)[0]
+    u_x = torch.autograd.grad(u, x, torch.ones_like(u), create_graph=True)[0]
+    u_xx = torch.autograd.grad(u_x, x, torch.ones_like(u_x), create_graph=True)[0]
     
-        residual = u_t - alpha * u_xx
-        return torch.mean(residual**2)
+    residual = u_t - alpha * u_xx
+    return torch.mean(residual**2)
 
-    # 3. Training Setup
-    model = PINN()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    mse = nn.MSELoss()
+# 3. Training Setup
+model = PINN()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+mse = nn.MSELoss()
 
-    # Data Generation (Collocation points)
-    x_col = torch.rand(2000, 1)
-    t_col = torch.rand(2000, 1)
+# Data Generation (Collocation points)
+x_col = torch.rand(2000, 1)
+t_col = torch.rand(2000, 1)
 
-    # Boundary/Initial Conditions (IC/BC)
-    x_ic = torch.rand(500, 1)
-    t_ic = torch.zeros(500, 1)
-    u_ic = torch.sin(np.pi * x_ic) # IC: u(x,0) = sin(pi*x)
+# Boundary/Initial Conditions (IC/BC)
+x_ic = torch.rand(500, 1)
+t_ic = torch.zeros(500, 1)
+u_ic = torch.sin(np.pi * x_ic) # IC: u(x,0) = sin(pi*x)
 
