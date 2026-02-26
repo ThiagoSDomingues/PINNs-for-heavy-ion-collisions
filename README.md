@@ -2,7 +2,7 @@
 
 ## Complete Tutorial and Implementation Guide
 
-**Author:** Research Tutorial  
+**Author:** OptimusThi  
 **Date:** February 2026  
 **Topic:** 1+1D Viscous Relativistic Hydrodynamics using PINNs
 
