@@ -16,13 +16,16 @@ from pyDOE import lhs # Latin Hypercube for collocation points?
 # Neural Network (MLP)
 # -----------------
 class PINN_NS(args):
-
     def __init__(self, layers):
-        self.attribute = something
+        self.layers = torch.nn.ModuleList()
+        self.activation = torch.tanh # NN activation function
+    
+    def forward(self, x): # forward propagation?
+        return out
 
-    def function:
-        return result
-
+def gradients(y, x):
+    # dy/dx for scalar field y(x)
+    return grad() 
 # training dataset: do we call it collocation points?
 x = 
 y = 
@@ -39,30 +42,37 @@ BC
 # PINN wrapper
 # -----------------
 class NavierStokesPINN:
-    def __init__(self, args):
+    def __init__(self, layers):
         """
         class description
         """
+#        self.NS_properties = 
+#        self.
+#        self.
+    
     def class_function:
         return
+        
+    def pde_residuals(self, x, y, t):
+        return
     
-# PDE residual loss 
-def loss(self, args):
-    # -----------------
-    # Initial condition
-    # -----------------
-    loss_ic = 
+    # PDE residual loss 
+    def loss(self, args):
+        # -----------------
+        # Initial condition
+        # -----------------
+        loss_ic = 
     
-    # ------------------
-    # Boundary condition
-    # ------------------
+        # ------------------
+        # Boundary condition
+        # ------------------
     
-    loss_bc = 
-    # -----------------
-    # PDE residual loss
-    # -----------------
-    loss_pde = 
-    loss_total = loss_ic + loss_bc + loss_pde
-    return loss_total, loss_ic, loss_bc, loss_pde
+        loss_bc = 
+        # -----------------
+        # PDE residual loss
+        # -----------------
+        loss_pde = 
+        loss_total = loss_ic + loss_bc + loss_pde
+        return loss_total, loss_ic, loss_bc, loss_pde
 
 if __name___ == '__main__':
