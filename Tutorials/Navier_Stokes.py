@@ -1,20 +1,24 @@
 #!shebang
 """
-Script description: using PINNs to solve Navier-Stokes (non-relativistic) equations. Probably I will divide this script in several pieces to have a modular code. 
+PINN for 2D incompressible Navier-Stokes (non-relativistic).
+Inputs: (x, y, t)
+Outputs: (u, v, p)
 """
 
 import torch 
-from torch.autograd import grad # (automatic derivatives) 
-from PyDoe import lhs # Latin Hypercube for collacation points?
+from torch.autograd import grad # automatic derivatives 
+from pyDOE import lhs # Latin Hypercube for collocation points?
 
 
 # usually we define a class for a PINN: input (space and time?) and output (physical quantities)
 
-# Neural Network Architecture: usually multi-perceptron layers (MPL)
-class PINN:
+# -----------------
+# Neural Network (MLP)
+# -----------------
+class PINN_NS(args):
 
-    def __init__(self):
-        self.attribute 
+    def __init__(self, layers):
+        self.attribute = something
 
     def function:
         return result
@@ -31,12 +35,34 @@ BC
 # define the activation function here? 
 # ReLU, tanh, etc...
 
-# define loss function
-def loss_function:
-    L_IC
-    L_BC
-    L_PDE
-    L_total = L_IC + L_BC + L_PDE
-    return 
+# -----------------
+# PINN wrapper
+# -----------------
+class NavierStokesPINN:
+    def __init__(self, args):
+        """
+        class description
+        """
+    def class_function:
+        return
+    
+# PDE residual loss 
+def loss(self, args):
+    # -----------------
+    # Initial condition
+    # -----------------
+    loss_ic = 
+    
+    # ------------------
+    # Boundary condition
+    # ------------------
+    
+    loss_bc = 
+    # -----------------
+    # PDE residual loss
+    # -----------------
+    loss_pde = 
+    loss_total = loss_ic + loss_bc + loss_pde
+    return loss_total, loss_ic, loss_bc, loss_pde
 
 if __name___ == '__main__':
