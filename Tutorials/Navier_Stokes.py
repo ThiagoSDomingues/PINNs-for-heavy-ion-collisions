@@ -4,12 +4,12 @@ Script description: using PINNs to solve Navier-Stokes (non-relativistic) equati
 """
 
 import torch 
-# import auto grad (automatic derivatives) 
+from torch.autograd import grad # (automatic derivatives) 
 
 
 # usually we define a class for a PINN: input (space and time?) and output (physical quantities)
 
-# Neural Network Architecture: usually  multi-perceptron layers (MPL)
+# Neural Network Architecture: usually multi-perceptron layers (MPL)
 class PINN:
 
     def __init__(self):
@@ -19,13 +19,23 @@ class PINN:
         return result
 
 # training dataset: do we call it collocation points?
+x = 
+y = 
+t = 
+# Initial conditions 
+IC
+# Boundary conditions
+BC
 
 # define the activation function here? 
 # ReLU, tanh, etc...
 
-def main:
-   
+# define loss function
+def loss_function:
+    L_IC
+    L_BC
+    L_PDE
+    L_total = L_IC + L_BC + L_PDE
+    return 
 
-   
-    
-   
+if __name___ == '__main__':
