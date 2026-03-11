@@ -5,6 +5,7 @@ Script description: using PINNs to solve Navier-Stokes (non-relativistic) equati
 
 import torch 
 from torch.autograd import grad # (automatic derivatives) 
+from PyDoe import lhs # Latin Hypercube for collacation points?
 
 
 # usually we define a class for a PINN: input (space and time?) and output (physical quantities)
