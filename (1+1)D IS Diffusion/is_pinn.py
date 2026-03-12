@@ -56,3 +56,22 @@ def gradients(y,x):
 # ------------------    
 
 def residual(model, t,x):
+
+# ------------------
+# training
+# ------------------
+
+model = 
+
+optimizer = torch.optim.Adam()
+
+for it in range(20000): # 20,000 ? 
+    
+    loss = loss_fn(model, t_r, x_r, t0, x0, n0)
+    
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    if it % 500 == 0:
+        print(it, loss.item())
