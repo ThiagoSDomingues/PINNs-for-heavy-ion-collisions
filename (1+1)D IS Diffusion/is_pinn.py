@@ -4,6 +4,9 @@
 Physics-Informed Neural Network (PINN) for Israel-Stewart diffusion: forward problem (evolve n(t,x) and J(t,x)). 
 The PINN must learn (n(t,x), J(t,x)) subject to local rest frame pde's for conserved current and relaxation time equation.
 Solves the (1+1)D Israel-Stewart diffusion system in the local rest frame (v=0, fixed uniform temperature).
+
+NN(t,x) --> (n, J)
+
 """
 
 import torch
@@ -32,3 +35,24 @@ def sigma(alpha):
     
 def tau_J(alpha,n):
     return 12*sigma(alpha)*T/n
+
+# ------------------
+# neural network
+# ------------------
+
+class PINN(nn.Module):
+    
+    def __init__(self, layers):
+     
+# ------------------
+# derivatives
+# ------------------
+
+def gradients(y,x):
+    return torch.autograd.grad()
+    
+# ------------------
+# PDE residual
+# ------------------    
+
+def residual(model, t,x):
