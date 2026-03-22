@@ -18,7 +18,7 @@ from matplotlib.ticker import LogLocator, MaxNLocator, ScalarFormatter
 import matplotlib.cm as cm
 import seaborn as sns
 
-from BDNK_IS_Functions_improved import (
+from BDNK_IS_Functions import (
     T_func, v_func, n_from_alpha_func, sigma_func, lambd_func, tauJ_func
 )
 
