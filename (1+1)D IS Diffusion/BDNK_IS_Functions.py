@@ -10,11 +10,11 @@ N_f = 3
 C_B = 1/(4*np.pi)
 
 def T_func(t, x):
-    return 0.3 * torch.ones_like(x)          # This option enabled for arbitrary function bakgrounds (first and second setups)
+    return 0.3 * torch.ones_like(x)          # This option enabled for arbitrary function backgrounds (first and second setups)
     #return _bicubic_sample_tx(t, x, _T_tab) # This option enabled for IS backgrounds (third setup)
 
 def v_func(t, x):
-    return 0.0 * torch.ones_like(x)          # This option enabled for arbitrary function bakgrounds (first and second setups)
+    return 0.0 * torch.ones_like(x)          # This option enabled for arbitrary function backgrounds (first and second setups)
     #return _bicubic_sample_tx(t, x, _v_tab) # This option enabled for IS backgrounds (third setup)
     
 def gamma_func(v):
