@@ -136,3 +136,8 @@ def IS_IC_from_BDNK_IC_func(t_vals, x_vals, alpha_1, J0_1):
     scriptJ = -sigma_1 * T * gamma * (v * alpha_1_t + alpha_1_x)
 
     return alpha_2, scriptJ
+
+# Inverse problem: given IS IC -> BDNK solutions
+def BDNK_IC_from_BDNK_IC_func(t_vals, x_vals, alpha_1, J0_1):
+
+    return
