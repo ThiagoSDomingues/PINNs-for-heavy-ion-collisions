@@ -8,7 +8,6 @@ import numpy as np
 from BDNK_IS_Functions import (
     T_func,
     alpha_from_n_func,
-    n_from_alpha_func,
     IS_IC_from_BDNK_IC_func,
 ) 
 
