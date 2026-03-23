@@ -57,10 +57,6 @@ def IC_IS(x: torch.Tensor, L: float):
     T = T_func(t_vals, x_vals)   # shape (N, 1), e.g. constant T = .3 GeV
     alpha = alpha_from_n_func(n, T)
 
-    dx = x_vals[1] - x_vals[0]
-    alpha_padded = torch.cat([alpha[:1], alpha, alpha[-1:]], dim=0)
-    N_x = -(alpha_padded[2:] - alpha_padded[:-2]) / (2.0 * dx)
-
     # Initial condition J0(t=0,x)
     d, f, g = 0.05, 10.0, 1.05      # Initial condition parameters
 
@@ -72,5 +68,7 @@ def IC_IS(x: torch.Tensor, L: float):
     # ============================
 
     alpha_2, scriptJ = IS_IC_from_BDNK_IC_func(t_vals, x_vals, alpha, J0)
+
+    # Add a causality condition here for alpha_2
     
     return scriptJ, alpha_2 
