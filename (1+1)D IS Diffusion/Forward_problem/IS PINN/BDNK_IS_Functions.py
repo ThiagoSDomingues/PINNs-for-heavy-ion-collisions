@@ -112,11 +112,13 @@ def J0_func(T, v, alpha, alpha_t, x):
 # IS FUNCTIONS AND BDNK TO IS FUNCTIONS
 # ==========================================
 
-def tauJ_func(alpha, T):
-    sigma = sigma_func(alpha, T)
-    n = n_from_alpha_func(alpha, T)
+#def tauJ_func(alpha, T):
+#    sigma = sigma_func(alpha, T)
+#    n = n_from_alpha_func(alpha, T)
 
-    return 12 * sigma * T / n
+#    return 12 * sigma * T / n
+def tauJ_func(T):
+    return C_B / T
 
 def IS_IC_from_BDNK_IC_func(t_vals, x_vals, alpha_1, J0_1):
     v = v_func(t_vals, x_vals)
