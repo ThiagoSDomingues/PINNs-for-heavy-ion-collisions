@@ -1,27 +1,39 @@
 import torch
 import torch.nn as nn
-from DivType_Functions import pde_residual
+import torch.autograd
+from DivType_Functions import *
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class PINN_DivType(nn.Module):
+
     def __init__(self, Nl, Nn, lb, ub):
         super().__init__()
-        self.register_buffer('lb', torch.as_tensor(lb, dtype=torch.float32))
-        self.register_buffer('ub', torch.as_tensor(ub, dtype=torch.float32))
-        self.register_buffer('sq', torch.tensor(1.0))   # scale for q
-        self.register_buffer('sA', torch.tensor(1.0))   # scale for alpha
+        # Scaling from physical units to [-1,1]
+        self.register_buffer('lb', torch.as_tensor(lb, dtype=torch.get_default_dtype()))
+        self.register_buffer('ub', torch.as_tensor(ub, dtype=torch.get_default_dtype()))
+        self.register_buffer('sq', torch.tensor(1.0, dtype=torch.get_default_dtype()))
+        self.register_buffer('sA',  torch.tensor(1.0, dtype=torch.get_default_dtype()))
 
-        # Build the network
-        layers = [nn.Linear(2, Nn), nn.Tanh()]
-        for _ in range(1, Nl - 1):
-            layers.append(nn.Linear(Nn, Nn))
-            layers.append(nn.Tanh())
-        layers.append(nn.Linear(Nn, 2))
-        self.net = nn.Sequential(*layers)
+        # --- residual scaling constants --- ### maybe not necessary!
+        self.n_scale      = 1.0
+        self.alpha_scale  = 1.0
+        self.L_domain     = 50.0    # default
 
-        # IC interpolation functions (set after instantiation)
+        # Build the network (produces raw candidates)
+        self.net = nn.Sequential()
+        self.net.add_module('Linear_layer_1', nn.Linear(2, Nn))
+        self.net.add_module('Tanh_layer_1', nn.Tanh())
+        for num in range(2, Nl):
+            self.net.add_module(f'Linear_layer_{num}', nn.Linear(Nn, Nn))
+            self.net.add_module(f'Tanh_layer_{num}', nn.Tanh())
+        self.net.add_module('Linear_layer_final', nn.Linear(Nn, 2))  # [q_raw, alpha_raw]    
+
+        # IC interpolation functions (set after instantiation). Algebraic enforcement toggles
         self.q_ic_func = None
         self.alpha_ic_func = None
 
+    # Helpers
     def _scale(self, X):
         return 2.0 * (X - self.lb) / (self.ub - self.lb) - 1.0
 
@@ -56,7 +68,7 @@ class PINN_DivType(nn.Module):
         # Enforce initial condition
         q_ic_x     = self.q_ic_func(x_phys)
         alpha_ic_x = self.alpha_ic_func(x_phys)
-        g = torch.exp(-1.0 * t_phys)          # g(0)=1 → IC dominates at t=0
+        g = torch.exp(-0.1 * t_phys)          # slower hard-IC decay
         h = 1.0 - g
 
         q_enf     = g * q_ic_x     + h * q_raw_periodic
@@ -73,16 +85,40 @@ class PINN_DivType(nn.Module):
         out = self.forward(x)
         q     = out[:, 0:1]
         alpha = out[:, 1:2]
-        return pde_residual(alpha, q, x)
+        return pde_residual(alpha, q, x,
+                            self.n_scale, self.alpha_scale, self.L_domain)
 
     def loss_pde(self, X_colloc):
-        return self.pde_residual(X_colloc).pow(2)
+        return self.pde_residual(X_colloc)**2
 
     def ic_residual(self, *args, **kwargs):
         return (torch.zeros(1, 1, device=self.lb.device),
                 torch.zeros(1, 1, device=self.lb.device))
 
     def loss_bc(self, xL, xR):
-        outL = self.forward(xL)
-        outR = self.forward(xR)
+        outL = self.forward(xL); outR = self.forward(xR)
         return ((outL - outR)**2).mean()
+
+    def loss_mass(self, t_grid, x_grid):
+        """
+        Penalise violation of total charge conservation.
+        t_grid : 1D tensor of time points (uniform)
+        x_grid : 1D tensor of spatial points (uniform, periodic domain)
+        """
+        device = x_grid.device
+        Nt, Nx = len(t_grid), len(x_grid)
+        tt, xx = torch.meshgrid(t_grid, x_grid, indexing='ij')
+        tx_mass = torch.stack([tt.reshape(-1), xx.reshape(-1)], dim=1).to(device)
+
+        out = self.forward(tx_mass)               # (Nt*Nx, 2)  -> [q, alpha]
+        alpha_pred = out[:, 1].view(Nt, Nx)       # get alpha field
+
+        # compute charge density n from alpha using the EOS
+        n_pred = n_func(alpha_pred)               # n_func from DivType_Functions
+
+        # integrate over x (simple trapezoidal / rectangular sum)
+        dx = (x_grid[1] - x_grid[0]).item()
+        total_n = n_pred.sum(dim=1) * dx          # total charge at each time
+
+        mass0 = total_n[0]                        # reference at t=0
+        return ((total_n - mass0) ** 2).mean()    
