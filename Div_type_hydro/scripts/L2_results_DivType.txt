@@ -1,2 +1,2 @@
-Relative L2(n) = 7.609989e-03
-Relative L2(q) = 3.019164e-01
+Relative L2(n) = 8.500815e-03
+Relative L2(q) = 6.718195e-02
