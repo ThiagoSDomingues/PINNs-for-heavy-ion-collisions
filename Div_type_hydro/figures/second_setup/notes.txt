@@ -4,6 +4,7 @@ Second setup results
 Here: 
 # second setup:
 n_init = (p * torch.exp(- (qq * x_vals / L)**2) + r) * 1e-2
+q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * 1e-2
 
 • Training results
 Using device: cuda
