@@ -14,7 +14,7 @@ import seaborn as sns
 
 from DivType_Functions import (
     T_func,
-    n_from_alpha_func,
+    n_func,
 )
 
 # ============================================================
@@ -223,9 +223,8 @@ def plot_results_divtype(model, t_eval, x_eval):
         torch.tensor(xx, dtype=dtype, device=device)
     )
 
-    n_grid = n_from_alpha_func(
-        torch.tensor(alpha_grid, dtype=dtype, device=device),
-        T_grid
+    n_grid = n_func(
+        torch.tensor(alpha_grid, dtype=dtype, device=device)
     ).cpu().numpy()
 
     # --------------------------------------------------------
@@ -236,7 +235,7 @@ def plot_results_divtype(model, t_eval, x_eval):
         q_grid,
         x_eval,
         t_eval,
-        ylabel=r'$q$'
+        ylabel=r'$\mathcal{J}$'
     )
 
     plot_field_panel(
