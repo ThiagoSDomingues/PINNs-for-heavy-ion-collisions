@@ -1,0 +1,60 @@
+PINN sensitivity to Lambda. I set Lambda = 500 because Lambda is a constant and the PINN performance looks 
+better in this range [200,500]. 
+
+IC 
+# Initial charge density n(t=0,x)
+p, qq, r = 0.2, 7.0, 1.0    # Initial condition parameters
+# First setup:
+n_init = (p * torch.exp(- (qq * x_vals / L)**2) + r) 
+
+# Initial diffusive flux q(t=0,x)
+d, f, g = 0.05, 10.0, 1.05 # Initial condition parameters
+
+q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) 
+
+Using device: cuda
+Scales: sq=1.100e+00, sA=1.034e+01
+Residual scales: n_scale=1.200e+00, alpha_scale=1.034e+01
+R1 rms = 0.3251165747642517
+R2 rms = 9.223577499389648
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=1.134e+00, R1_rms=1.167e-02, R2_rms=1.610e-01, mask_mean=21.66, lr=2.000e-03
+Epoch 2000/25000 | loss=9.705e-01, R1_rms=9.206e-03, R2_rms=7.361e-02, mask_mean=46.86, lr=8.000e-04
+Epoch 3000/25000 | loss=2.379e-01, R1_rms=6.133e-03, R2_rms=4.170e-02, mask_mean=69.60, lr=8.000e-04
+Epoch 4000/25000 | loss=2.560e-02, R1_rms=4.473e-03, R2_rms=1.861e-02, mask_mean=90.89, lr=3.200e-04
+Epoch 5000/25000 | loss=8.584e-02, R1_rms=3.875e-03, R2_rms=2.666e-02, mask_mean=106.56, lr=3.200e-04
+Epoch 6000/25000 | loss=1.192e-01, R1_rms=3.515e-03, R2_rms=2.595e-02, mask_mean=121.87, lr=3.200e-04
+Epoch 7000/25000 | loss=1.030e-02, R1_rms=3.118e-03, R2_rms=7.690e-03, mask_mean=131.20, lr=1.280e-04
+Epoch 8000/25000 | loss=1.845e-02, R1_rms=2.852e-03, R2_rms=6.417e-03, mask_mean=139.26, lr=1.280e-04
+Epoch 9000/25000 | loss=8.216e-03, R1_rms=2.654e-03, R2_rms=7.426e-03, mask_mean=147.13, lr=1.280e-04
+Epoch 10000/25000 | loss=1.076e-02, R1_rms=2.491e-03, R2_rms=5.988e-03, mask_mean=152.33, lr=5.120e-05
+Epoch 11000/25000 | loss=5.814e-03, R1_rms=2.334e-03, R2_rms=5.249e-03, mask_mean=156.55, lr=5.120e-05
+Epoch 12000/25000 | loss=4.975e-03, R1_rms=2.200e-03, R2_rms=3.880e-03, mask_mean=160.48, lr=5.120e-05
+Epoch 13000/25000 | loss=6.674e-03, R1_rms=2.105e-03, R2_rms=5.522e-03, mask_mean=164.28, lr=5.120e-05
+Epoch 14000/25000 | loss=8.399e-03, R1_rms=2.015e-03, R2_rms=5.492e-03, mask_mean=167.91, lr=5.120e-05
+Epoch 15000/25000 | loss=4.922e-03, R1_rms=1.940e-03, R2_rms=3.935e-03, mask_mean=171.40, lr=5.120e-05
+Epoch 16000/25000 | loss=3.741e-03, R1_rms=1.884e-03, R2_rms=3.604e-03, mask_mean=174.79, lr=5.120e-05
+Epoch 17000/25000 | loss=6.308e-03, R1_rms=1.832e-03, R2_rms=4.340e-03, mask_mean=178.09, lr=5.120e-05
+Epoch 18000/25000 | loss=4.930e-03, R1_rms=1.792e-03, R2_rms=4.618e-03, mask_mean=181.32, lr=5.120e-05
+Epoch 19000/25000 | loss=6.761e-03, R1_rms=1.764e-03, R2_rms=4.721e-03, mask_mean=184.44, lr=5.000e-05
+Epoch 20000/25000 | loss=7.764e-03, R1_rms=1.738e-03, R2_rms=4.497e-03, mask_mean=187.48, lr=5.000e-05
+Epoch 21000/25000 | loss=5.764e-03, R1_rms=1.713e-03, R2_rms=4.625e-03, mask_mean=190.46, lr=5.000e-05
+Epoch 22000/25000 | loss=3.105e-03, R1_rms=1.693e-03, R2_rms=3.724e-03, mask_mean=193.39, lr=5.000e-05
+Epoch 23000/25000 | loss=3.613e-03, R1_rms=1.672e-03, R2_rms=3.408e-03, mask_mean=196.27, lr=5.000e-05
+Epoch 24000/25000 | loss=3.550e-03, R1_rms=1.659e-03, R2_rms=3.525e-03, mask_mean=199.11, lr=5.000e-05
+Epoch 25000/25000 | loss=5.454e-03, R1_rms=1.646e-03, R2_rms=4.575e-03, mask_mean=201.91, lr=5.000e-05
+Adam complete. Best loss = 2.302e-03
+L‑BFGS init loss: 1.631e-05
+L‑BFGS done. best=1.716e-06, calls=1000
+Times: Adam 340.2s  L‑BFGS 20.0s  total 360.3s
+
+
+KT solution
+
+L = 50.0, Nx = 1000, dx = 0.1000, t_end = 10.0
+Simulation finished after 201 snapshots.
+Saved to ./KT_DivType/snapshots.npz
+
+ 
+Relative L2(n) = 8.500815e-03
+Relative L2(q) = 6.718195e-02
