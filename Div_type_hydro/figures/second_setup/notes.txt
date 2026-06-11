@@ -3,6 +3,12 @@ Second setup results
 • Closer to equilibrium regime than the first setup
 Here: 
 # second setup:
+
+# Initial charge density n(t=0,x)
+p, qq, r = 0.2, 7.0, 1.0    # Initial condition parameters
+# Initial diffusive flux q(t=0,x)
+d, f, g = 0.05, 10.0, 1.05 # Initial condition parameters
+
 n_init = (p * torch.exp(- (qq * x_vals / L)**2) + r) * 1e-2
 q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * 1e-2
 
