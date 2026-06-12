@@ -1,0 +1,16 @@
+SA_PINN_ACTO notebook
+
+✅ What the cell does
+• It evaluates the trained model on a uniform 200 × 200 grid.
+• It extracts the physical fields q, α, and n (computed with the correct EOS).
+• It saves everything to a timestamped .npz file that contains exactly the arrays required for the comparison.
+
+For a PINN vs. KT comparison
+• In the L² notebook, load the file we just saved:
+
+pinn_data = np.load("./pinn_runs/divtype_pinn_20260611_123456.npz")  # our run_id (example)
+t_pinn   = pinn_data["t_eval"]
+x_pinn   = pinn_data["x_eval"]
+q_pinn   = pinn_data["q"]
+alpha_pinn = pinn_data["alpha"]
+n_pinn   = pinn_data["n"]
