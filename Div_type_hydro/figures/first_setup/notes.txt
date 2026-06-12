@@ -1,3 +1,22 @@
+The first setup is in a regime where the fugacity α ≈ 10 (i.e. μ/T≈10), which is far from the dilute relativistic gas limit.
+
+• Equation of state – The pressure P0(α) we use (a quartic polynomial) is still mathematically well‑defined at α = 10. No singularity occurs.
+• Causality – For Λ = 500 the causality parameter is Λ ∂2P0/∂α2 ≈ 500 × 0.093 ≈ 46 ≫ 1, so the theory remains causal.
+
+Validity of the gradient expansion – The original derivation assumes that Jμ is small. With our initial condition q_IC ≈ 1.1 and σT ∼ 0.03, the Fick’s‑law estimate gives q_eq ∼ σT ∂x α which may be small, so the system may still be close to local equilibrium after a short transient. However, the large background α means that the non‑equilibrium pressure correction τJ/2σ J^2 is not necessarily negligible compared to P0 – a regime worth exploring, but not the “linear” one typically studied.
+
+The code is solving the equations correctly; the regime is physically interesting but should be characterised as “moderate‑density far‑from‑equilibrium”. For a first validation, it would be wise to also test a near‑equilibrium setup (α ≪ 1).
+
+Analysis of the training run: 
+• Normalisation: initial R1 ∼ 0.33, R2 ∼ 9.2. 
+• The mask quickly focused on the larger residual without killing the other – exactly as designed.
+• Convergence: Both RMS values dropped steadily. After Adam: R1 ∼ 1.6 × 10−3,  R2 ∼ 4.6 × 10−3. L‑BFGS further reduced the total loss to ∼ 1.7 × 10−6.
+• Mask behaviour: mask_mean grew from 21 to 202, indicating that the network struggled in some regions (likely where gradients are steep) but the mask successfully forced improvement there.
+
+This is a clean, successful training run – the PINN satisfies the PDE to high accuracy. After this we benchmark it against the KT solver.
+
+###### Results ####### 
+
 PINN sensitivity to Lambda. I set Lambda = 500 because Lambda is a constant and the PINN performance looks 
 better in this range [200,500]. 
 
