@@ -1,5 +1,5 @@
 for the “simplest” choice τJ/σ = constant (so Λ is constant, taken as λ = 500 in the run). The two residuals are
-R1 = ∂t n + ∂x q = 0 , R2 = ∂t(λq) + ∂x α + (1/σT)q = 0.
+R1 = ∂t n + ∂x q = 0 , R2 = ∂t(Λq) + ∂x α + (1/σT)q = 0.
 
 Derivation of the 1+1D PINN residuals for divergence‑type diffusion
 
