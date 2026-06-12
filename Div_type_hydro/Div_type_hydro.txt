@@ -1,0 +1,73 @@
+for the “simplest” choice τJ/σ = constant (so Λ is constant, taken as λ = 500 in the run). The two residuals are
+R1 = ∂t n + ∂x q = 0 , R2 = ∂t(λq) + ∂x α + (1/σT)q = 0.
+
+Derivation of the 1+1D PINN residuals for divergence‑type diffusion
+
+Starting point (from the notes, Eq. 1d_DT_EoM, local rest frame v=0):
+
+  ∂_t ( (1/T) ∂P/∂α )  +  ∂_x J  =  0 ,                     (1)
+  ∂_t ( (2/T) ∂P/∂J² · J )  +  ∂_x α  =  – (1/(σT)) J .    (2)
+
+The pressure (Eq. simple_EoS) is
+
+  P(α, J²) = P₀(α) + (τ_J/(2σ)) J² ,
+
+with τ_J/σ independent of α (constant Λ case).
+
+Step 1 — Charge density n
+
+From thermodynamics,
+  n = (1/T) ∂P/∂α = (1/T) dP₀/dα .
+
+Because the non‑equilibrium correction (τ_J/(2σ)) J² does not depend on α,
+  ∂P/∂α = dP₀/dα   ⇒   n = (1/T) dP₀/dα .
+
+Equation (1) becomes the familiar continuity equation
+
+  ∂_t n + ∂_x q = 0 ,      q ≡ J .                           (3)
+
+
+Step 2 — Relaxation parameter Λ
+
+From the definition of the relaxation time (Eq. DT_tau),
+
+  (2/T) ∂P/∂J² = τ_J/(σT) ≡ Λ .
+
+With the simple quadratic pressure,
+
+  ∂P/∂J² = τ_J/(2σ)   ⇒   (2/T)·(τ_J/(2σ)) = τ_J/(σT) = Λ .
+
+Therefore the coefficient in (2) is
+
+  (2/T) ∂P/∂J² · J = Λ q .                                   (4)
+
+
+Step 3 — Relaxation equation
+
+Insert (4) into (2):
+
+  ∂_t(Λ q) + ∂_x α = – (1/(σT)) q .
+
+Bring the source term to the left:
+
+  ∂_t(Λ q) + ∂_x α + (1/(σT)) q = 0 .                       (5)
+
+
+Step 4 — PINN residuals
+
+The two PDE residuals used in the PINN are exactly
+
+  R₁ = ∂_t n(α) + ∂_x q ,                                    (6)
+  R₂ = ∂_t(Λ q) + ∂_x α + (1/(σT)) q .                      (7)
+
+In the simulations, Λ is taken constant (Λ = 500) to match the
+“simplest” model advocated in the notes.  The α‑dependent
+conductivity σ(α) is used as given by the kinetic‑theory formula.
+The network outputs (q, α); the density n is obtained from α
+via the equilibrium equation of state n(α).
+
+Normalisation:
+  R₁ is divided by n_scale (max n at t=0),
+  R₂ is divided by α_scale (max α at t=0),
+following the BDNK strategy of scaling each residual by the
+characteristic magnitude of the principal field it governs.
