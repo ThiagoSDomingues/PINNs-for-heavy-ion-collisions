@@ -1,0 +1,216 @@
+Detailed Explanation of the Kurganov–Tadmor (KT) Solver for Divergence-Type Diffusion
+======================================================================================
+
+The code implements a finite‑volume scheme for the 1+1D divergence‑type
+diffusion equations in the local rest frame (v=0, constant T=0.3 GeV).
+
+The PDE system in conservation form is
+
+    ∂_t n      + ∂_x q                        = 0 ,
+    ∂_t (Λ q)  + ∂_x α                        = – (1/(σT)) q ,
+
+where Λ = τ_J/(σT).  The code uses a constant Λ = 500 (the “simplest”
+model from the notes).  The conductivity σ(α) depends on the fugacity α
+via the kinetic‑theory formula
+
+    σ(α) = (15 T / 4π) · (1/27 + α²/(243π²)) .
+
+The equilibrium equation of state gives the charge density
+
+    n(α) = (T³/3)·α + (T³/27)·α³ .
+
+All code is compiled with Numba for high speed.
+
+----------------------------------------------------------------------
+1. DOMAIN AND PHYSICAL CONSTANTS
+----------------------------------------------------------------------
+  L         = 50.0         half‑length of the spatial domain
+  t_end     = 10.0         final simulation time
+  Nx        = 1000         number of spatial cells
+  dx        = 2L / Nx      cell width
+  xc        = cell centres (uniform grid with periodic boundaries)
+
+  T_const = 0.3            temperature (GeV)
+  T_cube  = T_const³       used in EOS
+  lam     = 500.0          Λ = τ_J/(σT) – constant in this run
+
+----------------------------------------------------------------------
+2. CONSTITUTIVE FUNCTIONS (all decorated with @jit for speed)
+----------------------------------------------------------------------
+
+  n_func(alpha)
+    Returns the equilibrium charge density n(α) from the polynomial EOS.
+
+  sigma_func(alpha)
+    Returns the conductivity σ(α) using the RTA formula.
+
+  sigmaT_func(alpha)
+    Returns σ(α) · T, which appears in the source term of the PDE.
+
+  lambda_func(alpha)
+    Returns Λ(α) = 12 / n(α) .  This is the RTA expression; it is
+    defined here for completeness but NOT USED in the constant‑Λ run.
+    (When USE_RTA_LAMBDA is False in the PINN, Lambda is constant.)
+
+  alpha_from_n_func(n)
+    Inverts the cubic relation n(α) → α using Cardano’s formula.
+    Essential because the PDE residual requires α, but the conserved
+    variable is n.  The inversion is analytic and numerically stable.
+
+  T_func(t,x)
+    Returns the constant temperature field (0.3 GeV everywhere).
+
+----------------------------------------------------------------------
+3. INITIAL CONDITIONS
+----------------------------------------------------------------------
+  make_IC(xc)
+    Constructs the initial profiles at t=0:
+
+      n(0,x) = [p·exp(–(q·x/L)²) + r]          (Gaussian bump)
+      q(0,x) = [d·exp(–(f·x/L)²) + g]          (Gaussian bump)
+
+    Parameters: p=0.2, q=7.0, r=1.0 → background n≈1.0
+                d=0.05, f=10.0, g=1.05 → background q≈1.05
+    (In the near‑equilibrium version these are multiplied by 1e-2.)
+
+----------------------------------------------------------------------
+4. PERIODIC HELPER
+----------------------------------------------------------------------
+  roll1d(arr, shift)
+    A circular shift of a 1D array by `shift` positions.  Implements
+    periodic boundary conditions on the Nx‑cell grid.
+
+----------------------------------------------------------------------
+5. NUMERICAL FLUX (Kurganov–Tadmor)
+----------------------------------------------------------------------
+  numerical_flux(n, lam_q, T_arr)
+    Computes the numerical flux H_{j+1/2} for all interfaces j.
+
+    Input:
+      n     : cell‑averaged density at cell centres (length Nx)
+      lam_q : cell‑averaged Λ·q (length Nx)
+      T_arr : temperature at cell centres (constant, but kept for
+              generality)
+
+    Steps:
+
+    a) Minmod slope reconstruction (piecewise linear, TVD)
+
+         dn⁺  = (n_{j+1} – n_j) / dx
+         dn⁻  = (n_j – n_{j-1}) / dx
+         σ_j   = minmod(dn⁺, dn⁻)  → limited slope
+
+       Same for lam_q.  The minmod limiter selects the slope with the
+       smallest absolute value when both have the same sign, otherwise 0.
+
+    b) Face extrapolated values (left & right of interface j+1/2)
+
+         n⁻_{j+1/2}   = n_j   + 0.5·dx·σ_j
+         (Λq)⁻_{j+1/2}= Λq_j  + 0.5·dx·σlam_j
+         n⁺_{j+1/2}   = n_{j+1} – 0.5·dx·σ_{j+1}
+         (Λq)⁺_{j+1/2}= Λq_{j+1} – 0.5·dx·σlam_{j+1}
+
+    c) Physical fluxes at the reconstructed states
+
+         F^{(1)} = q = (Λq) / Λ
+         F^{(2)} = α = alpha_from_n_func(n)
+
+       So the fluxes are:
+
+         q⁻, α⁻  from (n⁻, (Λq)⁻)
+         q⁺, α⁺  from (n⁺, (Λq)⁺)
+
+    d) Maximum propagation speed
+
+         The eigenvalues of the Jacobian are ±√(dα/dn / Λ).
+         dα/dn is computed numerically: 1 / (dn/dα) ≈ δα/δn.
+
+         a_max = max( √(|dα/dn|⁻ / Λ) , √(|dα/dn|⁺ / Λ) )
+
+    e) KT central flux
+
+         H^{(1)}_{j+1/2} = ½(q⁻ + q⁺) – ½ a_max · (n⁺ – n⁻)
+         H^{(2)}_{j+1/2} = ½(α⁻ + α⁺) – ½ a_max · ((Λq)⁺ – (Λq)⁻)
+
+      The first term is the average of the physical fluxes; the second
+      term adds numerical diffusion proportional to the local wave speed.
+
+    Returns:
+      H : a (2, Nx) array containing the numerical fluxes at all Nx
+          interfaces.  The periodic closure is handled by the calling
+          routine (rhs) via roll1d.
+
+----------------------------------------------------------------------
+6. RIGHT‑HAND SIDE AND TIME STEPPING
+----------------------------------------------------------------------
+  rhs(n, lam_q, T_arr)
+    Assembles the semi‑discrete right‑hand side for the conserved
+    variables (n, Λq).
+
+    dU/dt = – div(H) + source
+
+    – For n:  d(n)/dt = – ( H^{(1)}_j – H^{(1)}_{j-1} ) / dx
+    – For Λq: d(Λq)/dt = – ( H^{(2)}_j – H^{(2)}_{j-1} ) / dx
+                          – (Λq) / (Λ·σT)
+      (The source term is –q/(σT) = –(Λq)/(Λ·σT).)
+
+    The divergence uses periodic difference via roll1d.
+
+  step_RK2(n, lam_q, T_arr, dt)
+    Performs a second‑order explicit Runge–Kutta (Heun) step:
+
+      k1 = rhs(n, lam_q)
+      k2 = rhs(n + dt*k1, lam_q + dt*k1)
+      n_new     = n     + ½ dt (k1_n + k2_n)
+      lam_q_new = lam_q + ½ dt (k1_lam + k2_lam)
+
+----------------------------------------------------------------------
+7. MAIN SIMULATION LOOP
+----------------------------------------------------------------------
+  a) Initialize fields from make_IC.  The conserved variable is
+     lam_q = Λ · q.
+
+  b) Define `save_times` as 201 uniformly spaced times from 0 to 10.
+
+  c) The main time loop:
+
+       while t < t_end:
+           – Compute the current α from n using alpha_from_n_func.
+           – Estimate dα/dn numerically.
+           – Compute a_max = √(|dα/dn|/Λ) and dt = CFL · dx / a_max
+             (CFL = 0.4).
+           – Call step_RK2 to advance n and lam_q.
+           – Record snapshots: whenever t reaches or passes a
+             save_times entry, store n, q (= lam_q/Λ), and α.
+
+  d) The snapshot block uses a `while` loop (not `if`) so that all
+     desired output times are saved even if multiple save times are
+     crossed in a single time step.
+
+  e) After the loop, the results are saved to `./KT_DivType/snapshots.npz`.
+
+----------------------------------------------------------------------
+8. PLOTTING
+----------------------------------------------------------------------
+  The plotting functions replicate the style used in the PINN module
+  (Plotting_DivType.py) for a consistent presentation:
+
+    – A custom grayscale colormap derived from “Greys_r”.
+    – plot_kt_field creates a figure with two rows:
+         top: 4 line snapshots at evenly spaced times
+              (legend in a separate subplot)
+         bottom: a pcolormesh heatmap of the full spacetime evolution.
+    – Three panels are produced: n, q (as script J), and α.
+
+  This allows a direct visual comparison between the KT reference
+  solution and the PINN predictions.
+
+----------------------------------------------------------------------
+SUMMARY
+----------------------------------------------------------------------
+The code solves the divergence‑type diffusion equations with second‑order
+accuracy in space and time using a Kurganov–Tadmor central scheme with
+minmod reconstruction and RK2 time stepping.  The constitutive relations
+(equation of state, conductivity) follow the notes.  The solver is
+efficient, portable, and serves as a reliable ground truth for
+validating the PINN results.
