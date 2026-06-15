@@ -1,0 +1,625 @@
+================================================================================
+  STABILIZING PINN LOSS FUNCTIONS: TECHNIQUES, REFERENCES, AND IDEAS
+  For Physics-Informed Neural Networks Applied to Relativistic Diffusion PDEs
+================================================================================
+
+Last updated: June 2026
+Context: (1+1)D BDNK, Israel-Stewart, and Divergence-Type diffusion theories
+         solved with SA-PINN-ACTO on GPU (CUDA, float32)
+
+--------------------------------------------------------------------------------
+0. THE CORE PROBLEM
+--------------------------------------------------------------------------------
+
+PINN training minimizes a multi-objective loss of the form
+
+    L_total = w_PDE * L_PDE  +  w_IC * L_IC  +  w_BC * L_BC
+
+The competing gradient signals from these terms cause:
+  - Gradient conflicts: ∇L_IC and ∇L_PDE point in opposite directions
+  - Stiffness: terms span many orders of magnitude (e.g. L_IC ~ 1e-2, L_PDE ~ 1e-9)
+  - Early saturation: the optimizer finds a local minimum that satisfies only
+    the easiest term (usually IC/BC) while ignoring the PDE
+  - Vanishing effective gradients: small w_i * large L_i ~ well-conditioned
+    total loss but tiny physics signal reaching the network
+
+In our specific context (DivType PINN):
+  - R1 (charge conservation) drops easily: R1_rms ~ 1e-4 by epoch 20000
+  - R2 (DT relaxation) stays stuck at R2_rms ~ 1.0 throughout
+  - Root cause: wrong IC for q (100× too large) + wrong lambda (lam=1 vs ~1000)
+  - The adaptive weight w2 = L1/L2 → 0, making w2*L2 ≈ 0 and R2 invisible
+
+The notes below catalog every known technique for solving these problems,
+with pointers to the relevant literature and concrete suggestions for
+application to our DT/IS/BDNK PINN codebase.
+
+--------------------------------------------------------------------------------
+1. SADDLE-POINT (MIN-MAX) REFORMULATION
+--------------------------------------------------------------------------------
+
+IDEA:
+  Instead of minimizing the weighted sum, reformulate PINN training as:
+
+      min_θ  max_λ  L_PDE(θ) + λ · g(θ)
+
+  where g(θ) = L_IC + L_BC are constraint violations and λ are dual variables
+  (Lagrange multipliers). This is a nonconvex-strongly concave saddle-point
+  problem. The dual variables automatically upweight violated constraints.
+
+KEY REFERENCE:
+  [1] Basir, S. & Senocak, I. (2022). "Physics and Equality Constrained
+      Artificial Neural Networks: Application to Forward and Inverse Problems
+      with Multi-Fidelity Data Fusion." Journal of Computational Physics, 463,
+      111301. https://doi.org/10.1016/j.jcp.2022.111301
+
+  [2] Adaptive BGDA optimizer:
+      Lu, L., Meng, X., Mao, Z., & Karniadakis, G. E. (2021). "DeepXDE:
+      A Deep Learning Library for Solving Differential Equations." SIAM Review,
+      63(1), 208-228. https://doi.org/10.1137/19M1274067
+
+  [3] Lagrangian-based PINN training:
+      Lagaris, I. E., Likas, A., & Fotiadis, D. I. (1998). "Artificial Neural
+      Networks for Solving Ordinary and Partial Differential Equations." IEEE
+      Transactions on Neural Networks, 9(5), 987-1000.
+
+PRACTICAL IMPLEMENTATION FOR OUR CODE:
+  Replace the weighted Adam step with:
+
+      # Dual variable (one per constraint term)
+      lam_dual = nn.Parameter(torch.ones(2))  # [lambda_IC, lambda_BC]
+      # Main optimizer (minimizes over theta)
+      opt_primal = Adam(model.parameters(), lr=lr_net)
+      # Dual optimizer (maximizes over lambda, so maximize=True)
+      opt_dual = Adam([lam_dual], lr=lr_dual, maximize=True)
+
+      # In the training loop:
+      L_pde  = R.pow(2).mean()
+      L_cons = w_IC * L_IC + w_BC * L_BC
+      loss = L_pde + (lam_dual[0]*L_IC + lam_dual[1]*L_BC)
+      loss.backward()
+      opt_primal.step()
+      opt_dual.step()
+      # Clamp dual variables to stay non-negative
+      lam_dual.data.clamp_(min=0.0)
+
+VALUE FOR DT PINN:
+  The dual variable for R2 would automatically grow when R2 is not being
+  reduced, forcing the optimizer to pay more attention to it. This would
+  directly solve the "w2 → 0" pathology we observed.
+
+--------------------------------------------------------------------------------
+2. ADAPTIVE LOSS BALANCING
+--------------------------------------------------------------------------------
+
+2a. ReLoBRaLo — Relative Loss Balancing with Random Lookback
+-------------------------------------------------------------
+
+REFERENCE:
+  [4] Bischof, R., & Kraus, M. (2021). "Multi-Objective Loss Balancing for
+      Physics-Informed Deep Learning." arXiv:2110.09813.
+      https://arxiv.org/abs/2110.09813
+  GitHub: https://github.com/rbischof/relative_loss_balancing
+
+IDEA:
+  Weight each loss term by its relative change over a random recent window:
+
+      rho_i(t) = L_i(t) / L_i(t - tau)   where tau ~ Uniform[1, T_lookback]
+      w_i(t)   = rho_i(t) / mean_j(rho_j(t))
+
+  Terms that are decreasing slowly get upweighted; terms that are
+  decreasing fast get downweighted. The lookback window introduces
+  randomness that prevents the weights from locking in prematurely.
+
+ADVANTAGE OVER NAIVE w2=L1/L2:
+  The original code sets w2 = L1/L2, which goes to ZERO when L2 > L1.
+  This is backward: the MORE violated term should get MORE weight, not less.
+  ReLoBRaLo correctly upweights slow-converging terms.
+
+IMPLEMENTATION SKETCH:
+  loss_history = {0: L1_init, 1: L2_init}
+  lookback = 500  # epochs
+
+  def relobralo_weights(L_current, L_history, epoch, lookback):
+      tau = np.random.randint(1, min(epoch, lookback) + 1)
+      L_past = L_history.get(epoch - tau, L_current)
+      rho = L_current / (L_past + 1e-30)
+      w = rho / (rho.mean() + 1e-30)
+      return w
+
+2b. NTK (Neural Tangent Kernel) Adaptive Weighting
+---------------------------------------------------
+
+REFERENCE:
+  [5] Wang, S., Teng, Y., & Perdikaris, P. (2021). "Understanding and
+      Mitigating Gradient Flow Pathologies in Physics-Informed Neural
+      Networks." SIAM Journal on Scientific Computing, 43(5), A3055-A3081.
+      https://doi.org/10.1137/20M1318043
+
+IDEA:
+  Weight each loss term inversely proportional to the mean of the diagonal
+  of its Neural Tangent Kernel (NTK):
+
+      w_i = max_j(K̂_jj) / K̂_ii
+
+  where K̂_ii = trace(∇_θ L_i · ∇_θ L_i^T) / N_i
+
+  This equates the "learning rate" of each term in function space.
+
+COST: Requires computing per-term gradient norms each epoch → ~2× overhead.
+
+IMPLEMENTATION:
+  # Compute per-term gradient norm (proxy for NTK diagonal)
+  def grad_norm(loss_term, model):
+      grads = torch.autograd.grad(loss_term, model.parameters(),
+                                  retain_graph=True, allow_unused=True)
+      return sum(g.norm()**2 for g in grads if g is not None).sqrt()
+
+  gn1 = grad_norm(L1, model)
+  gn2 = grad_norm(L2, model)
+  w1  = (gn1 + gn2) / (2 * gn1 + 1e-30)
+  w2  = (gn1 + gn2) / (2 * gn2 + 1e-30)
+  loss = w1 * L1 + w2 * L2
+
+2c. AutoBalance
+---------------
+
+REFERENCE:
+  [6] Chen, Z., Liu, Y., & Sun, H. (2021). "Physics-Informed Learning of
+      Governing Equations from Scarce Data." Nature Communications, 12, 6136.
+      https://doi.org/10.1038/s41467-021-26434-1
+
+  [7] Jin, X., Cai, S., Li, H., & Karniadakis, G. E. (2021). "NSFnets
+      (Navier-Stokes Flow nets): Physics-Informed Neural Networks for the
+      Incompressible Navier-Stokes Equations." Journal of Computational
+      Physics, 426, 109951. https://doi.org/10.1016/j.jcp.2020.109951
+
+IDEA:
+  Assign a separate Adam optimizer to each loss component. Each component
+  is normalized by its own adaptive moment estimates before aggregation:
+
+      L_total = L1 / stop_gradient(Adam1_step_scale)
+              + L2 / stop_gradient(Adam2_step_scale)
+
+  This prevents spectral heterogeneity in the losses from biasing the
+  shared optimizer.
+
+2d. Loss Normalization by Running Mean
+--------------------------------------
+
+SIMPLE APPROACH, NO EXTRA REFERENCES:
+  Track a running mean μ_i and std σ_i of each loss component:
+
+      w_i = 1 / (μ_i + epsilon)   # normalize by magnitude
+
+  This is equivalent to a z-score normalization of the loss landscape.
+  Simple to implement, often sufficient for moderate stiffness.
+
+--------------------------------------------------------------------------------
+3. DISCRETE RESIDUAL LOSS AND VARIATIONAL METHODS
+--------------------------------------------------------------------------------
+
+3a. Finite-Difference Residuals (Discrete Loss)
+------------------------------------------------
+
+REFERENCE:
+  [8] Kharazmi, E., Zhang, Z., & Karniadakis, G. E. (2021). "hp-VPINNs:
+      Variational Physics-Informed Neural Networks With Domain Decomposition."
+      Computer Methods in Applied Mechanics and Engineering, 374, 113547.
+      https://doi.org/10.1016/j.cma.2020.113547
+
+  [9] Krishnapriyan, A., Gholami, A., Zhe, S., Kirby, R., & Mahoney, M. W.
+      (2021). "Characterizing Possible Failure Modes in Physics-Informed
+      Neural Networks." NeurIPS 2021.
+      https://arxiv.org/abs/2109.01050
+
+IDEA:
+  Replace autograd-based PDE residuals with finite-difference approximations:
+
+      R1_FD = (n(t+dt, x) - n(t-dt, x)) / (2*dt)  +  (q(t,x+dx) - q(t,x-dx)) / (2*dx)
+
+  ADVANTAGES:
+    - No second-order autograd required → faster + more stable
+    - Avoids spurious high-frequency modes that autograd sometimes excites
+    - Naturally matches the discretization used by KT solver → easier comparison
+  DISADVANTAGES:
+    - Requires structured grid evaluation (no random collocation)
+    - May miss physics between grid points
+
+APPLICATION TO DT PINN:
+  For our (1+1)D system with t ∈ [0, t_end], x ∈ [-L, L]:
+    - Evaluate model on a fixed (Nt, Nx) grid each epoch
+    - Compute R1 = ∂_t n + ∂_x q via central differences on this grid
+    - Compute R2 = Λ∂_t q + ∂_x α + q/(σT) similarly
+    - This removes the expensive autograd.grad() calls and avoids the
+      "LHS stiffness" that keeps R2_rms ~ 1.0 in our current code
+
+3b. Variational / Weak-Form PINN (hp-VPINNs)
+---------------------------------------------
+
+REFERENCE:
+  [10] Kharazmi, E., Zhang, Z., & Karniadakis, G. (2019). "Variational
+       Physics-Informed Neural Networks for Solving Partial Differential
+       Equations." arXiv:1912.00873.
+       https://arxiv.org/abs/1912.00873
+
+IDEA:
+  Multiply the PDE by a test function v(x,t) and integrate by parts:
+
+      ∫∫ (∂_t n + ∂_x q) v dx dt = 0
+   →  -∫∫ n ∂_t v dx dt  +  boundary terms  +  ∫∫ q ∂_x v dx dt = 0
+
+  This REDUCES the derivative order on the network output (first → zero
+  derivatives of n in the first integral), yielding better-conditioned
+  loss functions. For our DT system with large Λ ~ 1000, the relaxation
+  equation R2 would benefit greatly from this reduction.
+
+3c. Causal Training (Time-Marching)
+-------------------------------------
+
+REFERENCE:
+  [11] Wang, S., Sankaran, S., & Perdikaris, P. (2022). "Respecting Causality
+       is All You Need for Training Physics-Informed Neural Networks."
+       arXiv:2203.07404. https://arxiv.org/abs/2203.07404
+
+IDEA:
+  For time-dependent PDEs, weight collocation points by a causality factor:
+
+      w(t_i) = exp(-epsilon * sum_{j: t_j < t_i} R(t_j)^2)
+
+  Points at later times get less weight until earlier times are satisfied.
+  This imposes a causal ordering: the network must learn early-time physics
+  before being penalized for late-time deviations.
+
+APPLICATION TO DT PINN:
+  Our DivType problem has a large R2 at t=0 (due to wrong q_IC) that
+  contaminates all later times. Causal weighting would automatically
+  reduce the weight on t>0 points until the t=0 IC mismatch is resolved.
+  It also prevents the "long-time leakage" where wrong early-time solutions
+  corrupt the entire spacetime domain.
+
+IMPLEMENTATION SKETCH:
+  # Compute cumulative residual weight (causal)
+  eps_causal = 1.0  # tunable
+  R_cumsum = torch.cumsum(R.pow(2).mean(dim=1), dim=0)
+  causal_w = torch.exp(-eps_causal * R_cumsum).detach()
+  L_pde = (causal_w.unsqueeze(1) * R.pow(2)).mean()
+
+--------------------------------------------------------------------------------
+4. HARD ENFORCEMENT OF INITIAL/BOUNDARY CONDITIONS
+--------------------------------------------------------------------------------
+
+REFERENCE:
+  [12] Lagaris, I. E., Likas, A., & Papageorgiou, D. G. (2000). "Neural-
+       Network Methods for Boundary Value Problems with Irregular Boundaries."
+       IEEE Transactions on Neural Networks, 11(5), 1041-1049.
+
+  [13] Berg, J., & Nyström, K. (2018). "A Unified Deep Artificial Neural
+       Network Approach to Partial Differential Equations in Complex
+       Geometries." Neurocomputing, 317, 28-41.
+       https://doi.org/10.1016/j.neucom.2018.06.056
+
+  [14] McFall, K. S., & Mahan, J. R. (2009). "Artificial Neural Network
+       Method for Solution of Boundary Value Problems with Exact Satisfaction
+       of Arbitrary Boundary Conditions." IEEE Transactions on Neural Networks,
+       20(8), 1221-1233.
+
+IDEA (ACTO — already implemented in our code):
+  Enforce IC algebraically via architecture modification:
+
+      u_pred(t, x) = exp(-t) * IC(x)  +  (1 - exp(-t)) * N(t, x)
+
+  where N(t, x) is the free network output. This makes L_IC ≡ 0 by
+  construction, completely removing it from the loss.
+
+OUR CURRENT ISSUE:
+  The decay rate exp(-γ·t) with γ = 0.1 is too slow for t_end = 10:
+  exp(-0.1 * 10) = 0.368 → IC still contributes 37% at t = t_end!
+  Use γ = 1.0 (as in the BDNK code): exp(-1.0 * 10) = 4.5e-5 → negligible.
+
+EXTENSION — Exact IC for q:
+  If q_IC is set correctly (= 0 or Fick value), the hard constraint cleanly
+  separates IC enforcement from PDE learning. With wrong q_IC = 1.05e-2,
+  the hard constraint forces R2 ~ q_IC/(σT) ~ 2.7 at ALL t=0 points forever,
+  which is an unresolvable source of training error.
+
+FURTHER EXTENSION — Distance Functions:
+  [15] Sukumar, N., & Srivastava, A. (2022). "Exact Imposition of Boundary
+       Conditions with Distance Functions in Physics-Informed Deep Neural
+       Networks." Computer Methods in Applied Mechanics and Engineering, 389,
+       114333. https://doi.org/10.1016/j.cma.2021.114333
+
+  Instead of exp(-t), use a smooth distance function d(x,t) that vanishes
+  on ALL boundaries simultaneously, enforcing IC and BC exactly in one term.
+
+--------------------------------------------------------------------------------
+5. CUSTOM ERROR METRICS AND LOSS FORMULATIONS
+--------------------------------------------------------------------------------
+
+5a. Variance-Based / Power Losses
+----------------------------------
+
+REFERENCE:
+  [16] Jagtap, A. D., Kawaguchi, K., & Karniadakis, G. E. (2020). "Adaptive
+       Activation Functions Accelerate Convergence in Deep and Physics-Informed
+       Neural Networks." Journal of Computational Physics, 404, 109136.
+       https://doi.org/10.1016/j.jcp.2019.109136
+
+  [17] McClenny, L., & Braga-Neto, U. (2023). "Self-Adaptive Physics-Informed
+       Neural Networks." Journal of Computational Physics, 474, 111722.
+       https://doi.org/10.1016/j.jcp.2022.111722
+       (This IS the SA-PINN paper — we already use this!)
+
+IDEA:
+  Replace the standard MSE loss with a loss that includes higher-order moments:
+
+      L = E[R²]  +  beta * Var[R]  +  gamma * E[|R|^p]
+
+  This penalizes not just the mean residual but also pointwise variance,
+  ensuring that localized high-error regions (shocks, sharp gradients) are
+  not smoothed away.
+
+FOR OUR DT PROBLEM:
+  The q/(σT) term creates localized large R2 near t=0. A variance-penalizing
+  loss would explicitly force the optimizer to address these spikes.
+
+5b. Log-Cosh Loss
+-----------------
+
+IDEA:
+  Replace MSE (quadratic growth) with log-cosh (linear growth for large errors):
+
+      L_logcosh = mean(log(cosh(R)))
+
+  This reduces the influence of catastrophically large residuals that
+  otherwise dominate gradient signals and pull the network in the wrong direction.
+
+  log(cosh(x)) ≈ x²/2 for small x (behaves like MSE)
+  log(cosh(x)) ≈ |x| - log(2) for large x (behaves like L1)
+
+IMPLEMENTATION:
+  def log_cosh_loss(R):
+      return torch.log(torch.cosh(R)).mean()
+
+5c. Relative Residuals
+-----------------------
+
+IDEA:
+  Normalize the residual pointwise by the local magnitude of the solution:
+
+      R1_rel = R1 / (|n| + epsilon)
+      R2_rel = R2 / (|q| + epsilon)
+
+  This focuses training on regions where the relative (not absolute) error
+  is large, which is more physically meaningful and avoids the loss being
+  dominated by regions of high absolute magnitude.
+
+--------------------------------------------------------------------------------
+6. ARCHITECTURAL IMPROVEMENTS
+--------------------------------------------------------------------------------
+
+6a. Fourier Feature Embeddings
+-------------------------------
+
+REFERENCE:
+  [18] Tancik, M., Srinivasan, P. P., Mildenhall, B., Fridovich-Keil, S.,
+       Raghavan, N., Singhal, U., Ramamoorthi, R., Barron, J. T., & Ng, R.
+       (2020). "Fourier Features Let Networks Learn High-Frequency Functions
+       in Low Dimensional Domains." NeurIPS 2020.
+       https://arxiv.org/abs/2006.10739
+
+  [19] Wang, S., Wang, H., & Perdikaris, P. (2021). "On the Eigenvector Bias
+       of Fourier Feature Networks: From Regression to Solving Multi-Scale
+       PDEs with Physics-Informed Neural Networks." Computer Methods in
+       Applied Mechanics and Engineering, 384, 113938.
+       https://doi.org/10.1016/j.cma.2021.113938
+
+IDEA:
+  Replace the raw (t, x) input with Fourier features:
+
+      γ(t, x) = [sin(2π B [t,x]^T), cos(2π B [t,x]^T)]
+
+  where B is a random matrix with entries sampled from N(0, σ²).
+  This allows the network to learn high-frequency features that tanh
+  networks with raw inputs struggle to represent.
+
+FOR DT PINN:
+  Our solutions develop sharp q(x,t) gradients as q relaxes from 1.05e-2
+  to the Fick value over τ_J ~ 44 GeV⁻¹. Fourier features with appropriate
+  σ matching the spatial frequency of the IC would accelerate convergence.
+
+6b. Modified Activation Functions
+----------------------------------
+
+REFERENCE:
+  [20] Jagtap, A. D., & Karniadakis, G. E. (2020). "Extended Physics-Informed
+       Neural Networks (XPINNs): A Generalized Space-Time Domain Decomposition
+       Based Deep Learning Framework for Nonlinear Partial Differential
+       Equations." Communications in Computational Physics, 28(5), 2002-2041.
+       https://doi.org/10.4208/cicp.OA-2020-0164
+
+  [21] Jagtap, A. D., Kawaguchi, K., & Karniadakis, G. E. (2020). "Locally
+       Adaptive Activation Functions with Slope Recovery for Deep and
+       Physics-Informed Neural Networks." Proceedings of the Royal Society A,
+       476(2239), 20200334. https://doi.org/10.1098/rspa.2020.0334
+
+IDEA:
+  Use adaptive activations: σ(a·n·x) where a and n are learnable parameters.
+  This allows each neuron to adapt its effective frequency, helping with
+  multi-scale problems where both slow (IC relaxation) and fast (q/σT)
+  dynamics must be captured simultaneously.
+
+IMPLEMENTATION:
+  class AdaptiveTanh(nn.Module):
+      def __init__(self, n_init=1.0):
+          super().__init__()
+          self.a = nn.Parameter(torch.ones(1))  # learnable slope
+          self.n = n_init
+      def forward(self, x):
+          return torch.tanh(self.a * self.n * x)
+
+6c. Multiscale Architecture (Separate Networks per Scale)
+----------------------------------------------------------
+
+IDEA:
+  For the DT problem, split the outputs into two separate networks:
+    - Net_fast(t, x) → q(t,x): captures fast q relaxation (τ_J ~ 44 GeV⁻¹)
+    - Net_slow(t, x) → α(t,x): captures slow α diffusion (τ_diff >> τ_J)
+
+  Alternatively, use a hierarchical decomposition:
+    - α(t,x) = Net_coarse(t, x)  [captures the large-scale Gaussian evolution]
+    - q(t,x) = -σ(α)T∂_x α  +  Net_residual(t, x)  [Fick + correction]
+
+  The Fick initialization removes the need to learn the dominant q signal
+  from scratch, leaving only the smaller correction to the network.
+
+--------------------------------------------------------------------------------
+7. SAMPLING AND COLLOCATION STRATEGIES
+--------------------------------------------------------------------------------
+
+REFERENCE:
+  [22] Wu, C., Zhu, M., Tan, Q., Kartha, Y., & Lu, L. (2023). "A Comprehensive
+       Study of Non-Adaptive and Residual-Based Adaptive Sampling for Physics-
+       Informed Neural Networks." Computer Methods in Applied Mechanics and
+       Engineering, 403, 115671. https://doi.org/10.1016/j.cma.2022.115671
+
+  [23] Daw, A., Bu, J., Wang, S., Perdikaris, P., & Karpatne, A. (2023).
+       "Mitigating Propagation Failures in Physics-Informed Neural Networks
+       using Retain-Resample-Release (R3) Sampling." ICML 2023.
+       https://arxiv.org/abs/2207.02338
+
+7a. Residual-Based Adaptive Sampling (RAD/RAR)
+-----------------------------------------------
+
+IDEA:
+  After every K epochs, evaluate R on a dense grid and resample collocation
+  points proportional to |R|^α (higher residual → more points there):
+
+      p(x,t) ∝ |R(x,t)|^α / Z
+
+  This automatically focuses training resources on the hardest regions
+  (near t=0 in our case, where q_IC creates large R2).
+
+7b. R3 (Retain-Resample-Release) Sampling
+-------------------------------------------
+
+IDEA:
+  Maintain a fixed pool of "retained" hard points and periodically:
+    1. RETAIN: keep the K hardest points from the current pool
+    2. RESAMPLE: add fresh LHS points to explore new regions
+    3. RELEASE: drop points whose residual has been reduced below threshold
+
+  This prevents the optimizer from ignoring difficult regions while also
+  ensuring adequate coverage of the full domain.
+
+7c. Temporal Sampling Curriculum
+----------------------------------
+
+IDEA:
+  Start training with only t ∈ [0, t_end/4], then progressively extend
+  the time horizon as the earlier part of the solution converges:
+
+      Phase 1: train on [0, t_end/4] until loss < threshold_1
+      Phase 2: train on [0, t_end/2] until loss < threshold_2
+      Phase 3: train on [0, t_end]
+
+  This is a "curriculum learning" approach that prevents incorrect
+  early-time solutions from contaminating the full domain.
+
+--------------------------------------------------------------------------------
+8. SPECIFIC RECOMMENDATIONS FOR THE DT/IS PINN
+--------------------------------------------------------------------------------
+
+In order of expected impact (highest first):
+
+PRIORITY 1 — Fix the physics (not a training trick):
+  - Set q_IC = 0 (equilibrium IC) or q_IC = Fick value = -σT∂_xα₀
+  - Use correct Λ = 12/n(α) in R2 (not lam = 1.0 or 100)
+  - These are NOT training tricks — they are fixing the wrong equations.
+    No amount of loss balancing can compensate for solving the wrong PDE.
+
+PRIORITY 2 — Match BDNK training exactly:
+  - Adam betas: (0.9, 0.95) not (0.9, 0.999)
+  - Scheduler factor: 0.4 not 0.8
+  - Scheduler patience: 700 not 800
+  - IC decay: exp(-1.0*t) not exp(-0.1*t)
+  - SA mask: restore it with betas (0.7, 0.85) as in BDNK
+
+PRIORITY 3 — Add causal weighting (Ref. [11]):
+  - Particularly important for our problem because R2 is large at t=0
+  - Prevents the t=0 IC mismatch from blocking learning at t>0
+  - Implementation: 3 lines in the training loop (see Section 3c)
+
+PRIORITY 4 — Replace adaptive w2 = L1/L2 with ReLoBRaLo (Ref. [4]):
+  - The current w2 = L1/L2 suppresses R2 when L2 > L1, which is backward
+  - ReLoBRaLo upweights slow-converging terms, which is what we need
+
+PRIORITY 5 — Add Fourier features (Ref. [18,19]):
+  - Our problem has two characteristic scales: τ_J ~ 44 GeV⁻¹ (fast q)
+    and τ_diff >> τ_J (slow α diffusion)
+  - Fourier features with σ matching both scales would help the network
+    represent both simultaneously
+
+PRIORITY 6 — Consider discrete residuals (Section 3a):
+  - Particularly if autograd instabilities persist in R2
+  - The KT solver already provides the correct discretization scheme;
+    using the same scheme in the PINN would ensure consistency
+
+PRIORITY 7 — Multiscale network (Section 6c):
+  - Initialize the q network with the Fick approximation q = -σT∂_xα
+  - Only the correction needs to be learned, which is ~100× smaller in magnitude
+  - This directly addresses the 100× IC scale mismatch
+
+--------------------------------------------------------------------------------
+9. SUMMARY TABLE OF METHODS
+--------------------------------------------------------------------------------
+
+Method                    | Ref    | Overhead | Difficulty | Impact for DT
+--------------------------|--------|----------|------------|---------------
+Fix q_IC (physics)        | —      | None     | Low        | ★★★★★
+Fix lambda (physics)      | —      | None     | Low        | ★★★★★
+Match BDNK hyperparams    | —      | None     | Low        | ★★★★☆
+Saddle-point (BGDA)       | [1,2]  | Medium   | Medium     | ★★★★☆
+ReLoBRaLo                 | [4]    | Low      | Low        | ★★★★☆
+NTK weighting             | [5]    | High     | Medium     | ★★★☆☆
+AutoBalance               | [6,7]  | Medium   | Medium     | ★★★☆☆
+Causal training           | [11]   | Low      | Low        | ★★★★☆
+Discrete residuals        | [8,9]  | Medium   | Medium     | ★★★☆☆
+Variational PINNs         | [10]   | High     | High       | ★★★☆☆
+Fourier features          | [18,19]| Low      | Low        | ★★★☆☆
+Adaptive activations      | [21]   | Low      | Low        | ★★☆☆☆
+RAD/RAR sampling          | [22]   | Medium   | Medium     | ★★★☆☆
+R3 sampling               | [23]   | Medium   | Medium     | ★★☆☆☆
+Temporal curriculum       | —      | Low      | Low        | ★★★☆☆
+Log-cosh loss             | —      | None     | Low        | ★★☆☆☆
+Variance penalty          | [17]   | Low      | Low        | ★★☆☆☆
+Distance functions (BC)   | [15]   | Medium   | High       | ★★☆☆☆
+Multiscale network        | —      | Low      | Medium     | ★★★★☆
+
+--------------------------------------------------------------------------------
+10. KEY PAPERS TO READ
+--------------------------------------------------------------------------------
+
+FOUNDATIONAL:
+  [1]  Wang et al. (2021), SIAM J. Sci. Comput. — NTK analysis of PINN failures
+  [2]  Raissi et al. (2019), J. Comput. Phys. — Original PINN paper
+  [3]  Lu et al. (2021), SIAM Review — DeepXDE library (comprehensive review)
+
+LOSS BALANCING (most relevant to our problem):
+  [4]  Bischof & Kraus (2021), arXiv:2110.09813 — ReLoBRaLo
+  [5]  Wang et al. (2021), SIAM — NTK weighting
+  [11] Wang et al. (2022), arXiv:2203.07404 — Causal training
+
+ARCHITECTURE:
+  [17] McClenny & Braga-Neto (2023), J. Comput. Phys. — SA-PINN (our method!)
+  [18] Tancik et al. (2020), NeurIPS — Fourier features
+  [21] Jagtap et al. (2020), Proc. Royal Soc. A — Adaptive activations
+
+FLUID DYNAMICS SPECIFIC:
+  [7]  Jin et al. (2021), J. Comput. Phys. — NSFnets for Navier-Stokes
+  [8]  Kharazmi et al. (2021), CMAME — hp-VPINNs variational formulation
+  [9]  Krishnapriyan et al. (2021), NeurIPS — Analysis of PINN failure modes
+
+SAMPLING:
+  [22] Wu et al. (2023), CMAME — Comprehensive adaptive sampling study
+  [23] Daw et al. (2023), ICML — R3 sampling
+================================================================================
