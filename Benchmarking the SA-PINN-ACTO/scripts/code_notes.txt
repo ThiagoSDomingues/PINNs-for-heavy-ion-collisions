@@ -1,14 +1,201 @@
-Code structure
+Code Structure
+==============
 
-folders: 
-• ground_truth: analytical solutions for each equation and L² relative error function
-• pinn_runs: pinns npz files containing the necessary information to make plots and analysis
-• results: figures with paper's results. GT:ground truth.
+This repository contains the implementation used to benchmark the SA-PINN-ACTO framework against three alternative physics-informed neural network approaches: the Vanilla PINN, the Self-Adaptive PINN (SA-PINN), and the PINN with Algebraic Constraints Through Output Transforms (PINN-ACTO).
 
-scripts:
-• IC_1D.py: script where we define all initial conditions
-• L2.ipynb: notebook where we plot the ground truths (analytical solutions of the equations) and make L² error analysis btw PINN's predictions vs. analytical solutions
-• Plotting.py: script to make nice plots
-• SA_PINN_ACTO.py: script to define the PINN architecture, residuals, loss functions, etc...
-• main.ipynb: PINN training process, plotting, and evaluation.
-• pinn_models.py: script to create PINNs architectures for all 4 equations and 4 different kinds of pinns. Maybe we use it later. I was trying to generalize the SA_PINN_ACTO.py script
+The benchmark suite includes four representative partial differential equations spanning different mathematical classes:
+
+• Wave equation (linear hyperbolic PDE)
+• Diffusion equation (linear parabolic PDE)
+• Viscous Burgers' equation (nonlinear parabolic PDE)
+• Compressible Euler equations (Sod shock-tube problem; nonlinear hyperbolic PDE system)
+
+The repository is organized to separate analytical solutions, training outputs, plotting utilities, and PINN implementations.
+
+Repository Structure
+--------------------
+
+ground_truth/
+^^^^^^^^^^^^^
+
+Contains the exact analytical solutions used as references throughout the benchmark study.
+
+Main purposes:
+
+• Generate ground-truth solutions for each PDE.
+• Compute quantitative error metrics.
+• Provide L² relative error calculations between PINN predictions and exact solutions.
+• Enable convergence and accuracy studies.
+
+This folder serves as the reference against which all neural-network predictions are evaluated.
+
+
+pinn_runs/
+^^^^^^^^^^
+
+Stores the outputs of trained PINN models.
+
+Typical contents include:
+
+• Network predictions.
+• Training histories.
+• Adaptive weights (for SA-PINN methods).
+• Loss evolution.
+• Evaluation metrics.
+• Metadata associated with each run.
+
+Files are saved in compressed NumPy (.npz) format to facilitate post-processing and reproducibility.
+
+These files are subsequently used for generating all benchmark figures and statistical analyses.
+
+
+results/
+^^^^^^^^
+
+Contains all figures generated for the paper.
+
+Examples include:
+
+• Ground-truth solution visualizations.
+• PINN prediction comparisons.
+• Relative error maps.
+• Training-loss histories.
+• Convergence studies.
+• Method-to-method comparisons.
+• Performance summaries.
+
+GT in figure names denotes Ground Truth.
+
+
+Scripts
+-------
+
+IC_1D.py
+^^^^^^^^
+
+Defines the one-dimensional initial conditions used throughout the benchmark suite.
+
+Responsibilities include:
+
+• Wave-equation initial conditions.
+• Diffusion-equation initial conditions.
+• Burgers-equation initial conditions.
+• Sod shock-tube initial conditions.
+
+This file provides a centralized location for modifying benchmark setups.
+
+
+L2.ipynb
+^^^^^^^^
+
+Notebook used for quantitative validation of PINN solutions.
+
+Main tasks:
+
+• Generate analytical solutions.
+• Visualize exact solutions.
+• Compute relative L² errors.
+• Compare PINN predictions against ground truth.
+• Produce error-versus-training plots.
+
+This notebook is primarily used after training.
+
+
+Plotting.py
+^^^^^^^^^^^
+
+Utility module containing plotting routines used throughout the project.
+
+Features include:
+
+• Publication-quality figures.
+• Consistent styling across benchmarks.
+• Heatmaps and contour plots.
+• Solution comparisons.
+• Error visualizations.
+• Training-history plots.
+• Multi-method comparisons.
+
+Centralizing plotting functions ensures a consistent visual presentation across all analyses.
+
+
+SA_PINN_ACTO.py
+^^^^^^^^^^^^^^^^
+
+Core implementation of the SA-PINN-ACTO framework.
+
+This script contains:
+
+• Neural-network architecture.
+• PDE residual definitions.
+• Loss-function construction.
+• Automatic differentiation routines.
+• Algebraic enforcement of initial conditions.
+• Algebraic enforcement of boundary conditions.
+• Self-adaptive weighting mechanisms.
+• Training utilities.
+
+This file represents the main implementation used in the benchmark study.
+
+
+main.ipynb
+^^^^^^^^^^
+
+Primary notebook used to run experiments.
+
+Responsibilities include:
+
+• Problem setup.
+• PINN construction.
+• Training execution.
+• Hyperparameter specification.
+• Model evaluation.
+• Figure generation.
+
+This notebook serves as the main entry point for reproducing the results reported in the paper.
+
+
+pinn_models.py
+^^^^^^^^^^^^^^
+
+Experimental module aimed at creating a unified framework for all benchmark problems and PINN variants.
+
+The long-term goal is to provide a generalized interface capable of automatically constructing:
+
+• Vanilla PINNs.
+• SA-PINNs.
+• PINN-ACTOs.
+• SA-PINN-ACTOs.
+
+for
+
+• Wave equation.
+• Diffusion equation.
+• Burgers' equation.
+• Euler equations.
+
+Although not currently the primary implementation used in the paper, this module represents an ongoing effort to improve modularity, extensibility, and code reuse.
+
+
+Workflow
+--------
+
+A typical workflow is:
+
+1. Define the benchmark problem and initial conditions in IC_1D.py.
+2. Train the desired PINN variant using main.ipynb and SA_PINN_ACTO.py.
+3. Save model outputs to pinn_runs/.
+4. Compare predictions against analytical solutions using L2.ipynb.
+5. Generate publication-quality figures using Plotting.py.
+6. Store final figures in results/.
+
+Research Goal
+-------------
+
+The purpose of this repository is to provide a systematic and reproducible benchmark of the SA-PINN-ACTO methodology across PDEs of increasing complexity, ranging from smooth linear equations to nonlinear shock-dominated systems. The framework is designed to evaluate the impact of:
+
+• Self-adaptive residual weighting (SA-PINN),
+• Algebraic enforcement of auxiliary conditions (ACTO),
+• Their combination (SA-PINN-ACTO),
+
+on training stability, convergence speed, and predictive accuracy.
