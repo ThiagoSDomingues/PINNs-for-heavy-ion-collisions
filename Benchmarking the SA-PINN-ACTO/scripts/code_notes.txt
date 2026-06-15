@@ -1,0 +1,14 @@
+Code structure
+
+folders: 
+• ground_truth: analytical solutions for each equation and L² relative error function
+• pinn_runs: pinns npz files containing the necessary information to make plots and analysis
+• results: figures with paper's results. GT:ground truth.
+
+scripts:
+• IC_1D.py: script where we define all initial conditions
+• L2.ipynb: notebook where we plot the ground truths (analytical solutions of the equations) and make L² error analysis btw PINN's predictions vs. analytical solutions
+• Plotting.py: script to make nice plots
+• SA_PINN_ACTO.py: script to define the PINN architecture, residuals, loss functions, etc...
+• main.ipynb: PINN training process, plotting, and evaluation.
+• pinn_models.py: script to create PINNs architectures for all 4 equations and 4 different kinds of pinns. Maybe we use it later. I was trying to generalize the SA_PINN_ACTO.py script
