@@ -1,5 +1,5 @@
 
-TITLE: Benchmarking SA-PINN-ACTO for the Solution of Partial Differential Equations
+TITLE: Benchmarking the SA-PINN-ACTO across linear and nonlinear partial differential equations
 
 OVERVIEW
 ========
