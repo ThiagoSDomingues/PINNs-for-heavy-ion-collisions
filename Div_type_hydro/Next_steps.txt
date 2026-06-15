@@ -1,0 +1,8 @@
+Next Steps
+• Try Lambda (change the sign) negative or very small; 
+• Impose the causality condition, check the causality condition; 
+  • assert in the PINN in local way
+• Matching conditions: how much the acronym is important? Linear and nonlinear regime studies
+• Global conservation, convergence test
+• To search to make Loss more stable
+• Heatmap for KT residuals
