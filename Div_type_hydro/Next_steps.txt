@@ -2,7 +2,250 @@ Next Steps
 • Try Lambda (change the sign) negative or very small; 
 • Impose the causality condition, check the causality condition; 
   • assert in the PINN in local way
-• Matching conditions: how much the acronym is important? Linear and nonlinear regime studies
-• Global conservation, convergence test
-• To search to make Loss more stable
+• Matching conditions: how much the acronym (BDNK or IS) is important? Linear and nonlinear (small and large alpha) regime studies
+• Global charge conservation, convergence test
+  • Make a plot of charge conservation over simulation (training?) time;
+• To search: how to make the PINN's Loss function more stable? New techniques?   
+• Try a smaller initial q (scriptJ) until you see some interesting dynamics happening. Why that's the case?
 • Heatmap for KT residuals
+• Generalize everything for the case where we have a non-trivial background (T is not constant, v is not zero), which means, we're not in the rest frame anymore. Which things I need to change?
+
+
+================================================================================
+IMPLEMENTATION NOTES
+================================================================================
+
+1. GLOBAL CHARGE CONSERVATION AND CONVERGENCE TEST
+--------------------------------------------------
+
+1.1 Theoretical expectation
+The continuity equation ∂_t n + ∂_x q = 0 with periodic boundary conditions
+implies that the total charge
+
+    N(t) = ∫_{-L}^{L} n(t,x) dx
+
+is exactly conserved: dN/dt = 0.  Any numerical solution (KT or PINN) should
+exhibit N(t) = N(0) up to truncation or training errors.
+
+1.2 Computing N(t) during PINN training
+The model class already has a method loss_mass() that returns the mean squared
+deviation of N(t) from N(0).  You can use it to monitor conservation, but it
+is an average over the evaluation times.  To get a time‑resolved plot, evaluate
+the model on a grid at every K epochs (e.g. every 1000) and compute N(t) for
+each snapshot.
+
+Practical steps:
+  - Choose an evaluation grid (e.g. t_eval, x_eval as used for plotting).
+  - At epoch 0, after every 1000 epochs, and after training:
+      model.eval()
+      with torch.no_grad():
+          pred = model(tx_tensor)
+          alpha = pred[:,1].view(Nt,Nx)
+          n = n_func(alpha)
+          N_t = n.sum(dim=1) * dx
+          store N_t.cpu().numpy()
+  - Plot N_t - N_t[0] versus t_eval.  A good PINN should keep this difference
+    below 1e-3 for typical resolutions.
+
+1.3 Computing N(t) for the KT solution
+After loading the KT snapshots (n_store, t_kt, x_kt), simply sum over x with
+appropriate dx:
+
+    N_kt = n_store.sum(axis=1) * dx_kt
+    N_kt_0 = N_kt[0]
+    plt.plot(t_kt, N_kt - N_kt_0)
+
+For a converged KT run, this should be zero to machine precision (the
+finite‑volume scheme is conservative by construction).  Any deviation indicates
+a bug (e.g., incorrect source term).
+
+1.4 Convergence test for charge conservation
+The Richardson convergence test (Q_n) already measures how the L¹ difference
+scales, which indirectly includes conservation errors.  To explicitly check
+mass conservation, you can also compute the maximum of |N(t) - N(0)| over time
+for each resolution (N, 2N, 4N) and verify it decreases with Δx^2.  This is
+optional but strengthens the validation.
+
+1.5 Plot suggestion
+Make a single figure with two panels:
+  (a) N(t) - N(0) from the PINN at various training stages (epochs 1000, 5000,
+      final) and from KT.
+  (b) Zoom‑in of the same plot to see the PINN's late‑time drift.
+Include a legend and mention that KT (conservative) serves as reference.
+
+----------------------------------------------------------------------------
+2. TRYING A SMALLER INITIAL q – INTERESTING DYNAMICS
+----------------------------------------------------------------------------
+
+2.1 Motivation
+In your current near‑equilibrium setup (amplitude 1e-2), the initial flux
+q ~ 0.01 is already small.  Making it even smaller (e.g. 1e-4 or exactly zero)
+pushes the system closer to the linear regime where the relaxation equation
+decouples and can exhibit underdamped (wave‑like) behaviour if Λ is not too
+large.
+
+2.2 Implementation
+In IC_DivType.py, modify the q_init line:
+
+    q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * SCALE
+
+with SCALE = 1e-3, 1e-4, 0.0.  The simplest is to set q_init = torch.zeros_like(alpha_init)
+(equilibrium start).
+
+2.3 Expected physics
+For q_init = 0, the flux must build up from zero due to the density gradient.
+The relaxation equation
+
+    Λ ∂_t q + ∂_x α = - (1/(σT)) q
+
+acts like a driven damped oscillator.  If Λ is moderate (e.g. 500) and the
+gradient is smooth, the flux will approach the Fick’s law value
+q ≈ -σT ∂_x α within a time ~ ΛσT.  During this transient, you may see
+overshoots or oscillations if the damping is weak (i.e. if σT is small).
+Since σT ≈ 0.03–0.05, the damping time is ~15–25, which is longer than the
+simulation time (10).  So the flux will still be adjusting, leading to a
+clearly visible wave‑like propagation.
+
+2.4 Why this is interesting
+- It highlights the difference between the full relaxation dynamics and the
+  instantaneous Fick’s law.
+- The PINN may struggle more with the sharp transient, but the self‑adaptive
+  mask should handle it.
+- You can compare the solution with the analytical solution of the linear
+  telegrapher equation for a Gaussian initial density profile (available in
+  terms of Bessel functions).
+
+2.5 Analysis steps
+- Run KT and PINN with q_init = 0.
+- Compare the early‑time (t < 2) evolution of q(x,t).  You should see a
+  propagating front rather than an instantaneous adjustment.
+- Compute the L² error; it might be slightly higher due to the transient,
+  but still acceptable.
+
+----------------------------------------------------------------------------
+3. GENERALIZATION TO NON‑TRIVIAL BACKGROUND (v ≠ 0)
+----------------------------------------------------------------------------
+
+3.1 Full equations in 1+1D
+From your notes, the general equations (before setting v=0) are:
+
+    ∂_t ( (γ/T) ∂P/∂α + γ v q ) + ∂_x ( (γ v /T) ∂P/∂α + γ q ) = 0,
+    ∂_t ( (2γ/T) ∂P/∂(q²) q + γ v α ) + ∂_x ( (2γ v /T) ∂P/∂(q²) q + γ α )
+        = - (1/(σT)) q .
+
+Here q ≡ J¹, and γ = 1/√(1−v²).  The equilibrium pressure is P₀(α), and the
+non‑equilibrium part adds (τ_J/(2σ)) q² (with Λ = τ_J/(σT) constant or
+α‑dependent).  The combination (2/T) ∂P/∂(q²) q = Λ q, exactly as before.
+Also n = (1/T) ∂P/∂α = (1/T) dP₀/dα, unchanged.
+
+Thus the conserved variables are:
+    U = ( (γ/T) ∂P/∂α + γ v q ,   Λ γ q + γ v α )   [equation order may differ]
+and the fluxes are:
+    F = ( (γ v /T) ∂P/∂α + γ q ,  Λ γ v q + γ α ) .
+The source term remains (0, -q/(σT)) in the second equation.
+
+For the PINN, we still output (q, α) as primitive variables, then construct
+U, F, and the source.  The residual involves ∂_t U + ∂_x F - S = 0.
+
+3.2 Necessary changes to the code
+
+a) DivType_Functions.py
+   - v_func(t,x) must return the chosen velocity field (e.g., constant v0).
+   - T_func may also depend on x,t if desired.
+   - gamma_func(v) = 1 / sqrt(1 - v²).
+   - The PDE residual must be rewritten to compute the full fluxes.
+
+b) New pde_residual (sketch)
+
+   def pde_residual(alpha, q, tx, n_scale, alpha_scale, L_domain):
+       t, x = tx[:,0:1], tx[:,1:2]
+       v    = v_func(t, x)
+       gam  = gamma_func(v)
+       T    = T_func(t, x)
+       n    = n_func(alpha)          # = (1/T) dP₀/dα  (valid if P independent of q²)
+       Lam  = lambda_func(alpha)
+       sigT = sigmaT_func(alpha)
+
+       # First conserved quantity:  U1 = gam*n + gam*v*q
+       # (because (1/T)∂P/∂α = n)
+       U1 = gam * n + gam * v * q
+       # Second conserved quantity: U2 = Lam * gam * q + gam * v * alpha
+       U2 = Lam * gam * q + gam * v * alpha
+
+       # Fluxes
+       F1 = gam * v * n + gam * q
+       F2 = Lam * gam * v * q + gam * alpha
+
+       # Compute derivatives
+       g_U1 = self.gradients(U1, tx)
+       g_U2 = self.gradients(U2, tx)
+       g_F1 = self.gradients(F1, tx)
+       g_F2 = self.gradients(F2, tx)
+
+       # Residuals
+       R1_raw = g_U1[:,0:1] + g_F1[:,1:2]        # ∂_t U1 + ∂_x F1
+       R2_raw = g_U2[:,0:1] + g_F2[:,1:2] + q / sigT   # ∂_t U2 + ∂_x F2 + source
+
+       R1 = R1_raw / n_scale
+       R2 = R2_raw / alpha_scale
+       return torch.cat([R1, R2], dim=1)
+
+   The normalisation constants n_scale, alpha_scale should still be the maximum
+   of n and α at t=0 (which may now depend on v through the IC transformation).
+
+c) Initial conditions
+   If the background velocity is constant, the initial profiles for α and q
+   can be obtained by Lorentz‑boosting the rest‑frame profiles.  For a simple
+   test, start with the same Gaussian n(0,x) and q(0,x) as before, and set
+   v=0.1 or 0.5.  The PINN will then evolve them with the boosted equations.
+
+d) Hard-IC enforcement (ACTO)
+   The forward method in SA_PINN_DivType enforces the IC by blending the raw
+   network output with the IC functions.  This still works because the IC
+   functions return the physical initial values at t=0, independent of v.
+   However, if v ≠ 0, the periodic boundary condition may need to account for
+   advection (e.g., inflow/outflow) — but since the domain is periodic, the
+   same periodic enforcement (xi blending) remains valid.
+
+e) KT solver generalization
+   For the KT scheme, you would need to write a new Riemann solver or central
+   scheme for the non‑conservative products (when v depends on x).  If v is
+   constant, the system is still hyperbolic with eigenvalues shifted by v.
+   The easiest approach: work in the local rest frame by applying a global
+   Lorentz boost to the initial data, solve in the rest frame, and then boost
+   back.  This avoids rewriting the KT flux.
+
+3.3 Causality condition with v ≠ 0
+   The characteristic speeds in the lab frame are v ± c_s, where c_s is the
+   sound speed in the rest frame.  Causality requires |v ± c_s| ≤ 1.
+   Since c_s is still given by √(1/(Λ) * dα/dn), the condition becomes
+   |v| + c_s ≤ 1.  This is more restrictive and should be checked.
+
+3.4 Recommended tests
+   - Start with a small constant v (e.g., 0.1) and verify that the PINN can
+     handle the boosted solution.
+   - Compare with a boosted KT solution (by boosting the rest‑frame result).
+   - Check that the error does not grow significantly compared to v=0.
+   - Later, you can introduce a non‑constant v(x) (e.g., a shear flow), but
+     that requires careful treatment of the non‑conservative products.
+
+3.5 Limitations
+   The present PINN architecture expects a scalar flux q (the x‑component).
+   For v ≠ 0, the full current J^μ = (γ v q, γ q) is used.  This is fine as
+   long as q is the only dynamical dissipative variable.  If you later include
+   shear or bulk viscosity, you would need additional network outputs.
+
+----------------------------------------------------------------------------
+SUMMARY
+----------------------------------------------------------------------------
+1. Global charge conservation can be monitored easily with the existing tools;
+   plot N(t)-N(0) for both PINN and KT.
+2. Smaller initial q reveals transient wave dynamics; start with q=0 and
+   compare with Fick’s law.
+3. For a moving background, rewrite the PDE residuals using the full
+   conserved quantities U1, U2 and fluxes F1, F2 as shown above; keep
+   v constant for a first test; boost KT results for comparison.
+
+These steps will significantly extend the physical scope of your
+divergence‑type PINN and provide a rich set of results for your paper.
+================================================================================
