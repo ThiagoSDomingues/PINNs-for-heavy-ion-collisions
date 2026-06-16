@@ -2,20 +2,90 @@ Next Steps
 • Try Lambda (change the sign) negative or very small; 
 • Impose the causality condition, check the causality condition; 
   • assert in the PINN in local way
+  • derive the causality condition analytically and show it's general dependence
 • Matching conditions: how much the acronym (BDNK or IS) is important? Linear and nonlinear (small and large alpha) regime studies
+  • Implement the matching conditions for BDNK and DivType hydro theory
 • Global charge conservation, convergence test
   • Make a plot of charge conservation over simulation (training?) time;
-• To search: how to make the PINN's Loss function more stable? New techniques?   
+• To search: how to make the PINN's Loss function more stable? what kind of new techniques I can use to make the loss function more stable?    
 • Try a smaller initial q (scriptJ) until you see some interesting dynamics happening. Why that's the case?
 • Heatmap for KT residuals
 • Generalize everything for the case where we have a non-trivial background (T is not constant, v is not zero), which means, we're not in the rest frame anymore. Which things I need to change?
-
 
 ================================================================================
 IMPLEMENTATION NOTES
 ================================================================================
 
-1. GLOBAL CHARGE CONSERVATION AND CONVERGENCE TEST
+EXPLORING NEGATIVE OR VERY SMALL Λ
+
+Physics background  
+Λ = τ_J/(σT) is positive for any stable theory (second law of thermodynamics).  
+A negative Λ would flip the sign of the relaxation term, turning damping into anti‑damping – the flux would grow exponentially. Very small Λ (e.g. 0.1, 0.01) pushes the system into the acausal regime where the characteristic speed ≈ √(T/(Λ d²P₀/dα²)) exceeds the speed of light. Training will become stiff and often fail.
+
+What to do
+- Negative Λ: set `lam = -500.0` in both the PINN and KT code. Expect the loss to diverge immediately or after a few steps. This is a nice sanity check that the network can “detect” unphysical parameters.  
+- Small Λ: try a series `lam = 10, 1, 0.1, …`. we will see the loss increase and the mask blow up as the system becomes stiffer. Record the final L² error vs. Λ to illustrate the PINN’s robustness limits.
+
+Code change  
+Simply alter the `CONST_LAMBDA` variable in the notebook (or `lam` in the KT script). No other modifications needed.
+
+IMPOSING AND CHECKING THE CAUSALITY CONDITION
+
+Analytical derivation (correct units)
+The linearised system around a constant state reads  
+\[
+\partial_t \delta n + \partial_x \delta q = 0,
+\qquad
+\Lambda\,\partial_t \delta q + \frac{d\alpha}{dn}\,\partial_x \delta n = -\frac{1}{\sigma T}\delta q .
+\]
+The source term does not affect the characteristic speeds.  
+The principal matrix is  
+\[
+A = \begin{pmatrix} 0 & 1 \\ \frac{1}{\Lambda}\frac{d\alpha}{dn} & 0 \end{pmatrix},
+\]
+so the characteristic speeds are  
+\[
+v = \pm\sqrt{\frac{1}{\Lambda}\frac{d\alpha}{dn}} .
+\]
+Using the equation of state \(n(\alpha) = \frac{T^3}{3}\alpha + \frac{T^3}{27}\alpha^3\),  
+\[
+\frac{dn}{d\alpha} = \frac{T^3}{3} + \frac{T^3}{9}\alpha^2,
+\qquad
+\frac{d\alpha}{dn} = \frac{1}{dn/d\alpha}.
+\]
+Therefore  
+\[
+v = \pm\sqrt{\frac{T}{\Lambda\left(\frac{d^2P_0}{d\alpha^2}\right)}},
+\qquad
+\frac{d^2P_0}{d\alpha^2} = T\,\frac{dn}{d\alpha} = \frac{T^4}{3} + \frac{T^4}{9}\alpha^2 .
+\]
+Causality (\(|v|\le 1\)) requires  
+\[
+\boxed{\Lambda\,\frac{d^2P_0}{d\alpha^2} \;\ge\; T}.
+\]
+For constant \(T = 0.3\) GeV this is the condition you must check.
+
+Some derivations drop factors of \(T\) because they use units where \(T=1\) or define \(\alpha\) differently. The condition above is the dimensionally consistent one.
+
+Local check inside the PINN (and KT)
+
+We can compute the maximum characteristic speed on the collocation points and assert it is ≤ 1.  
+Add this method to `PINN_DivType`:
+
+```python
+def characteristic_speed(self, x):
+    x.requires_grad_(True)
+    out = self.forward(x)
+    alpha = out[:, 1:2]
+    Lam = lambda_func(alpha)          # whatever Λ model you use
+    d2P = T_const**4 / 3.0 + (T_const**4 / 9.0) * alpha**2
+    speed2 = T_const / (Lam * d2P + 1e-30)
+    return torch.sqrt(speed2)
+
+Then during training we can periodically print max_speed = model.characteristic_speed(X_colloc).max().item().
+If max_speed > 1.0 the current state is acausal – either the Λ value is too small or the solution has entered a regime where the theory breaks down.
+
+GLOBAL CHARGE CONSERVATION AND CONVERGENCE TEST
 --------------------------------------------------
 
 1.1 Theoretical expectation
@@ -123,10 +193,67 @@ clearly visible wave‑like propagation.
   but still acceptable.
 
 ----------------------------------------------------------------------------
-3. GENERALIZATION TO NON‑TRIVIAL BACKGROUND (v ≠ 0)
+HEATMAP FOR KT RESIDUALS
 ----------------------------------------------------------------------------
 
-3.1 Full equations in 1+1D
+We can compute the PDE residuals directly on the KT solution using finite differences.
+Here’s a complete cell that loads the KT data, evaluates R1, R2, 
+and plots them in the same style as the PINN residuals.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+
+# Load KT snapshot
+kt = np.load("./KT_DivType/snapshots.npz")
+t_kt, x_kt = kt['t'], kt['x']
+n_kt, q_kt, alpha_kt = kt['n'], kt['q'], kt['alpha']
+
+# Constants (must match the simulation)
+T_const = 0.3
+T_cube  = T_const**3
+lam     = 500.0
+
+# EOS and transport functions (numpy versions)
+def n_from_alpha(alpha):
+    return (T_cube/3.0)*alpha + (T_cube/27.0)*alpha**3
+def sigmaT_from_alpha(alpha):
+    sig = (15.0*T_const/(4.0*np.pi))*(1.0/27.0 + alpha**2/(243.0*np.pi**2))
+    return sig * T_const
+
+# Compute derivatives with numpy.gradient
+dt = t_kt[1] - t_kt[0]
+dx = x_kt[1] - x_kt[0]
+
+nt = np.gradient(n_kt, dt, axis=0)      # ∂_t n
+qx = np.gradient(q_kt, dx, axis=1)      # ∂_x q
+R1 = nt + qx
+
+lam_q = lam * q_kt
+lam_qt = np.gradient(lam_q, dt, axis=0) # ∂_t (Λq)
+alpha_x = np.gradient(alpha_kt, dx, axis=1) # ∂_x α
+sigT = sigmaT_from_alpha(alpha_kt)
+R2 = lam_qt + alpha_x + q_kt / sigT
+
+# Plot
+fig, axs = plt.subplots(1,2,figsize=(12,5))
+for ax, data, title in zip(axs,
+    [np.abs(R1), np.abs(R2)],
+    [r'$|R_1|$ (KT)', r'$|R_2|$ (KT)']):
+    im = ax.pcolormesh(x_kt, t_kt, data, shading='auto',
+                       norm=LogNorm(vmin=1e-12, vmax=data.max()), cmap='inferno')
+    ax.set_xlabel(r'$x$ [GeV${}^{-1}$]'); ax.set_ylabel(r'$t$ [GeV${}^{-1}$]')
+    ax.set_title(title)
+    plt.colorbar(im, ax=ax)
+plt.tight_layout(); plt.show()
+```
+
+----------------------------------------------------------------------------
+GENERALIZATION TO NON‑TRIVIAL BACKGROUND (v ≠ 0)
+----------------------------------------------------------------------------
+
+Full equations in 1+1D
 From your notes, the general equations (before setting v=0) are:
 
     ∂_t ( (γ/T) ∂P/∂α + γ v q ) + ∂_x ( (γ v /T) ∂P/∂α + γ q ) = 0,
@@ -147,7 +274,7 @@ The source term remains (0, -q/(σT)) in the second equation.
 For the PINN, we still output (q, α) as primitive variables, then construct
 U, F, and the source.  The residual involves ∂_t U + ∂_x F - S = 0.
 
-3.2 Necessary changes to the code
+Necessary changes to the code
 
 a) DivType_Functions.py
    - v_func(t,x) must return the chosen velocity field (e.g., constant v0).
@@ -238,11 +365,11 @@ e) KT solver generalization
 ----------------------------------------------------------------------------
 SUMMARY
 ----------------------------------------------------------------------------
-1. Global charge conservation can be monitored easily with the existing tools;
+Global charge conservation can be monitored easily with the existing tools;
    plot N(t)-N(0) for both PINN and KT.
-2. Smaller initial q reveals transient wave dynamics; start with q=0 and
+Smaller initial q reveals transient wave dynamics; start with q=0 and
    compare with Fick’s law.
-3. For a moving background, rewrite the PDE residuals using the full
+For a moving background, rewrite the PDE residuals using the full
    conserved quantities U1, U2 and fluxes F1, F2 as shown above; keep
    v constant for a first test; boost KT results for comparison.
 
