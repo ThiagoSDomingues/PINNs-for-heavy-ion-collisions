@@ -1,0 +1,120 @@
+-------------------------------------------------
+Last discussion:
+-------------------------------------------------
+
+• Try different seeds, architecture, band idea
+  • Hyperparameters bands: change seeds, different architectures (hidden layers)
+    • Loss functions bands? How to plot them?
+• Report the noise of the loss signal, smooth loss functions and report? 
+• Possible interesting papers (to add more)
+  • [HYPERPARAMETER TUNING IN PHYSICS INFORMED NEURAL NETWORK ARCHITECTURE FOR SOLVING PARTIAL DIFFERENTIAL EQUATIONS](https:/ papers.ssrn.com/sol3/papers.cfm abstract_id=5141458)
+  • [Hyper-parameter tuning of physics-informed neural networks: Application to Helmholtz problems](https://arxiv.org/pdf/2205.06704)
+
+We need to extend our existing framework. It will:
+
+• Run multiple seeds and architectures for each of the four PINN variants.
+• Record loss, L2 error (vs ground truth), and wall‑time per epoch.
+• Generate all required plots: snapshots, loss/error curves (with uncertainty bands), and L₂ heatmaps (clipped for log‑scale).
+• Provide a flexible configuration to test hyperparameter bands.
+
+-------------------------------------------------
+Past steps:
+-------------------------------------------------
+
+Build an unified framework for the four PINN architectures and benchmark them on the four 1D PDE problems.
+• pinn_models.py
+  • Add Euler (Sod) system of equations
+• Training loop: train_benchmark.py
+  • Add other three problems
+
+Ground truth
+
+• Burgers's equation: cole_hopf.py
+• Diffusion: exact_diffusion.py # Gaussian bump
+• Euler/Sod: exact_sod.py 
+• Wave equation: exact_wave.py # d'Alembert function
+
+Plots: spacetime heatmaps and selected time slices
+
+IC 
+• Burgers
+• Wave equation
+• Diffusion
+• Euler / Sod
+
+• Vanilla PINN
+• SA-PINN
+• PINN-ACTO
+• SA-PINN-ACTO
+
+-------------------------------------------------
+Suggestions:
+-------------------------------------------------
+
+Data structure for storing results
+
+Create a dictionary or class to hold all metrics for one run:
+
+```python
+results = {
+    'model': 'VanillaPINN',          # or others
+    'problem': 'Burgers',            # etc.
+    'seed': 42,
+    'arch': [2, 50, 50, 1],
+    'epochs_adam': 8000,
+    'epochs_lbfgs': 1500,
+    'adam_loss': [],                 # per epoch (list)
+    'lbfgs_loss': [],                # per inner iteration (optional)
+    'l2_error': [],                  # per epoch (computed on test grid)
+    'wall_time': [],                 # cumulative time per epoch
+    'final_model': model.state_dict(),
+    'hyperparams': {...}             # nu, L, etc.
+}
+```
+
+Ground truth functions
+
+Wrap all exact solutions in a single interface:
+
+```python
+def get_ground_truth(problem, x, t, **params):
+    if problem == 'Burgers':
+        from ground_truth.cole_hopf import cole_hopf_burgers_1d
+        return cole_hopf_burgers_1d(x, t, nu=params['nu'], L=params['L'])
+    elif problem == 'Wave':
+        from ground_truth.exact_wave import exact_wave
+        return exact_wave(x, t, L=params['L'], c=params['c'])
+    elif problem == 'Diffusion':
+        from ground_truth.exact_diffusion import exact_diffusion
+        return exact_diffusion(x, t, c=params['D'], L=params['L'])
+    elif problem == 'Euler':
+        from ground_truth.exact_sod import exact_sod
+        sol = exact_sod(x, t, ...)
+        return sol['rho']   # or v, p – we treat each scalar separately
+    else:
+        raise ValueError
+```        
+
+Evaluation on a fixed test grid
+
+Create a test grid (fine mesh) once per problem:
+
+x_test = np.linspace(-L, L, 500)
+t_test = np.linspace(0, t_max, 300)
+X_test, T_test = np.meshgrid(x_test, t_test, indexing='ij')  # careful: we need (Nt, Nx)
+
+Then for a given model, compute predictions on this grid and L2 error:
+
+```python
+def compute_l2_error(model, problem, x_test, t_test, params):
+    # Prepare input tensor
+    X_grid = torch.stack([torch.tensor(T_test.flatten()), 
+                          torch.tensor(X_test.flatten())], dim=1).to(device)
+    with torch.no_grad():
+        u_pred = model(X_grid).cpu().numpy().reshape(len(t_test), len(x_test))
+    u_true = get_ground_truth(problem, x_test, t_test, **params)
+    # L2 relative error (normalized by L2 norm of true solution)
+    error = np.sqrt(np.mean((u_pred - u_true)**2)) / np.sqrt(np.mean(u_true**2))
+    return error, u_pred, u_true
+```
+Continue...
