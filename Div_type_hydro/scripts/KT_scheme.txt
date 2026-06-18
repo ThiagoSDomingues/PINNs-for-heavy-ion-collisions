@@ -1,3 +1,20 @@
+======================================================================================
+Kurganov-Tadmor scheme
+======================================================================================
+• central KT scheme
+ • Equations needs to be flux-conservative?
+ • Second order in space (TVD limiter) and time (SSP-RK2)
+ • local speed estimates to compute fluxes
+ • q: conserved variable, S: source term, numerical fluxes
+ • linear reconstructions + non-oscillatory limiters (minmod)
+ • symmetric one-sided speeds in the flux computation
+ • Periodic boundary conditions
+• Grid and periodic boundary conditions
+  • space discretization: N finite volume cells, cell width $\delta_x$. N = 1000 for continuous initial data.
+• Adaptive time step
+  • time steps: maximum local characteristic speed. $\delta t = \frac{\delta x}{8 c_{\rm max}(t)}$. Why to use this? Check the characteristic velocity for DivType hydro 
+• Convergence tests
+
 Detailed Explanation of the Kurganov–Tadmor (KT) Solver for Divergence-Type Diffusion
 ======================================================================================
 
