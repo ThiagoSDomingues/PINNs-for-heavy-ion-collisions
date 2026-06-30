@@ -1,0 +1,137 @@
+Testing
+• Diffusion problem first
+  • Solution plot 
+    • initial time, final time
+      • wave, heat, Bur, Eul. 24 plots 
+  • 3D Scatter plots
+     • L2 error (solution vs. exact), Metric for Loss function (I), Loss function (L), evoluation time (t_E). 32 plots
+  • time vs I, time vs L2. 8 plots 
+
+Metric for Loss function
+• measure the instability of the loss function (something to measure the noise of the loss function)
+
+------------------------------------
+Loss function instability metric (I)
+------------------------------------
+
+A useful instability metric should satisfy a few properties:
+• Be small when the loss decreases smoothly.
+• Increase when the optimization oscillates.
+• Be independent of the absolute scale of the loss.
+• Be easy to compare across different PDEs and PINN architectures.
+
+-----------------------
+Loading simulation data
+-----------------------
+
+from pathlib import Path
+import pandas as pd
+
+root = Path("results")
+
+records = []
+
+for pde in root.iterdir():
+
+    if not pde.is_dir():
+        continue
+
+    for run in pde.iterdir():
+
+        history = pd.read_csv(run/"history.csv")
+
+        loss = history["loss"].values
+
+        metric = instability_total_variation(loss)
+
+        records.append({
+            "PDE": pde.name,
+            "Run": run.name,
+            "Instability": metric,
+            "Final Loss": loss[-1],
+            "L2": history["l2"].iloc[-1],
+            "Training Time": history["time"].iloc[-1],
+        })
+
+df = pd.DataFrame(records)
+
+print(df) 
+
+Example output:
+
+      PDE   Run   Instability   L2 Error    Final Loss    Time
+0    Heat  run1      1.38       2.3e-4      8e-7        22.1
+1    Heat  run2      2.75       6.2e-4      4e-6        24.8
+2    Wave  run1      1.15       3.1e-5      1e-7        20.4
+...
+
+-------------------------------
+Scatter plots for data analysis
+-------------------------------
+Once we've built the DataFrame, we need to generate the following plots: to compare L2 error, instability metric, final loss, and training time in a 3D scatter plot:
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.set_theme(style="ticks", context="paper")
+
+fig = plt.figure(figsize=(8, 7))
+ax = fig.add_subplot(111, projection="3d")
+
+sc = ax.scatter(
+    df["L2"],
+    df["Instability"],
+    df["Final Loss"],
+    c=df["Training Time"],
+    cmap="viridis",
+    s=80,
+)
+
+ax.set_xlabel(r"$L_2$ Error")
+ax.set_ylabel(r"Instability $I$")
+ax.set_zlabel(r"Final Loss $L$")
+
+cb = plt.colorbar(sc)
+cb.set_label(r"$t_E$ (s)")
+
+plt.tight_layout()
+plt.show()
+
+This gives us a single summary visualization of the relationship among accuracy, optimization stability, convergence quality, and computational cost. The same DataFrame can also be used to produce the time vs. instability and time vs. L₂ error plots, as well as the projection-style figures.
+
+----------------
+Analysis scripts
+----------------
+We have 4 PDEs × 4 neural architectures × multiple runs
+
+analysis/
+│
+├── load_results.py
+├── metrics.py
+├── plots.py
+├── config.py
+└── make_all_figures.py
+
+where, 
+• load_results.py reads every simulation.
+• metrics.py computes the instability metric.
+• plots.py contains all plotting functions.
+• make_all_figures.py produces every figure automatically.
+
+1. Solution plots (24 figures)
+For each PDE, snapshots x-t plots (bands representing the percentiles)
+• Initial condition (t=0)
+• Final prediction (t_f)
+• Exact solution
+
+2. 3D Scatter plots 
+Center: 
+• x = L2 Error 
+• y = Instability 
+• z = Final Loss
+• color = Training time (real time)
+Projections:
+• XY
+• XZ
+• YZ
+It immediately reveals every correlation. One figure summarizes all relationships. Inspect clusters. 
