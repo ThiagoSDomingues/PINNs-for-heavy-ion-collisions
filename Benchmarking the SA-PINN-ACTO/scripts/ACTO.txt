@@ -1,0 +1,50 @@
+\paragraph{First-order periodic boundary conditions.}
+For problems requiring continuity of both the solution and its spatial gradient across periodic boundaries, we enforce
+\begin{equation}
+    u(t,-L) = u(t,L), \qquad u_x(t,-L) = u_x(t,L).
+\end{equation}
+To embed these conditions algebraically, we introduce a correction polynomial that depends on the boundary mismatches of the raw network output $\tilde{u}_\theta(t,x)$. Define the zeroth- and first-order mismatches as
+\begin{align}
+    \Delta_0 &= \tilde{u}_\theta(t,L) - \tilde{u}_\theta(t,-L), \\
+    \Delta_1 &= \partial_x \tilde{u}_\theta(t,L) - \partial_x \tilde{u}_\theta(t,-L).
+\end{align}
+We then construct the transformed field
+\begin{equation}\label{eq:first_order_periodic}
+    u_\theta(t,x)
+    =
+    \tilde{u}_\theta(t,x)
+    +
+    \frac{\Delta_0 - L\Delta_1}{4L^3} (x+L)^3
+    +
+    \frac{2L\Delta_1 - 3\Delta_0}{4L^2} (x+L)^2,
+\end{equation}
+where the correction term is a cubic polynomial in $x$ (with coefficients depending on $t$ through $\Delta_0$ and $\Delta_1$) designed to satisfy the four boundary constraints while preserving the interior structure of $\tilde{u}_\theta$.
+
+To verify the enforcement, evaluate the transformation at the boundaries. At $x=-L$, the polynomial and its derivative vanish identically, giving
+\[
+    u_\theta(t,-L) = \tilde{u}_\theta(t,-L), \qquad
+    u_{\theta,x}(t,-L) = \tilde{u}_{\theta,x}(t,-L).
+\]
+At $x=L$, direct substitution yields
+\[
+    u_\theta(t,L) = \tilde{u}_\theta(t,L) - \Delta_0 = \tilde{u}_\theta(t,-L),
+\]
+and for the derivative,
+\[
+    u_{\theta,x}(t,L) = \tilde{u}_{\theta,x}(t,L) - \Delta_1 = \tilde{u}_{\theta,x}(t,-L).
+\]
+Thus, both periodic conditions are satisfied exactly:
+\[
+    u_\theta(t,-L)=u_\theta(t,L), \qquad
+    u_{\theta,x}(t,-L)=u_{\theta,x}(t,L).
+\]
+
+Consequently, the boundary loss term vanishes identically,
+\[
+    \mathcal{L}_{\rm BC}=0,
+\]
+and the total loss reduces to the PDE residual alone:
+\[
+    \mathcal{L} = \mathcal{L}_{\rm PDE}.
+\]
+This transformation seamlessly extends the zeroth-order ACTO approach to first-order periodicities. Notably, it requires computing the spatial derivative of the raw network only at the boundary points, which is readily available via automatic differentiation. The resulting transformed network remains differentiable with respect to $t$ and $x$, as $\Delta_0$ and $\Delta_1$ depend on the boundary evaluations of $t$ (and network parameters) but are treated as constants with respect to the evaluation coordinate $x$ during the spatial derivative of the correction term. This ensures compatibility with standard gradient-based optimization for solving time-dependent PDEs.
