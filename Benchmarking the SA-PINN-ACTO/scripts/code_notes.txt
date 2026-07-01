@@ -199,3 +199,29 @@ The purpose of this repository is to provide a systematic and reproducible bench
 • Their combination (SA-PINN-ACTO),
 
 on training stability, convergence speed, and predictive accuracy.
+
+Algebraically enforcing periodic boundary conditions
+----------------------------------------------------
+For periodic domains, we adopt an output transformation inspired by~\cite{hao2025stabilitytrainingpinnsstiff}, but without modifying the network inputs. Instead, we apply the transformation
+\begin{equation}\label{eq:algebraic_enforcement_of_BCs}
+    \mathbf{u}_\theta(t,x)
+    =
+    \tilde{\mathbf{u}}_\theta(t,x)
+    -
+    \frac{x+L}{2L}
+    \left[
+        \tilde{\mathbf{u}}_\theta(t,L)
+        -
+        \tilde{\mathbf{u}}_\theta(t,-L)
+    \right],
+\end{equation}
+which guarantees that $\mathbf{u}_\theta(t,-L)=\mathbf{u}_\theta(t,L)$ for all $t$. Consequently,
+\begin{equation}
+    \mathcal{L}_{\rm BC}=0,
+\end{equation}
+and the loss function reduces to
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\rm PDE}.
+\end{equation}
+
+First-order periodic boundary conditions
