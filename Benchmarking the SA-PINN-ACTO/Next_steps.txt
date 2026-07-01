@@ -2,7 +2,8 @@
 Next Steps:
 -------------------------------------------------
 • Analysis scritps --> analysis.txt
-
+• Algebraically Enforcing the periodic boundary conditions -> Diffusion equation
+  • Zeroth and first-order
 -------------------------------------------------
 Last discussion:
 -------------------------------------------------
