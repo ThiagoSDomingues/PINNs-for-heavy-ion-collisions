@@ -71,3 +71,94 @@ Normalisation:
   R₂ is divided by α_scale (max α at t=0),
 following the BDNK strategy of scaling each residual by the
 characteristic magnitude of the principal field it governs.
+
+--------------------
+Causality Condition
+--------------------
+
+For the relaxation-type theory considered here, causality requires
+
+    (τ_J/(σ T)) (∂²P₀/∂α²) ≥ 1,
+
+or, defining
+
+    Λ ≡ τ_J/(σ T),
+
+the condition becomes
+
+    Λ (∂²P₀/∂α²) ≥ 1.
+
+The equation of state is written as
+
+    P(α,J²) = P₀(α) + (τ_J/(2σ)) J²,
+
+where, for the present discussion, τ_J/σ is assumed to be independent of
+α. The equilibrium contribution is
+
+    P₀(T,α)
+      = (95π²/180) T⁴
+        + (T⁴/6) α²
+        + (T⁴/108) α⁴.
+
+Differentiating P₀ with respect to α while keeping T fixed gives
+
+    ∂P₀/∂α
+      = T⁴ (α/3 + α³/27),
+
+and therefore
+
+    ∂²P₀/∂α²
+      = T⁴ (1/3 + α²/9).
+
+The conductivity is taken to be
+
+    σ = (15T)/(4π) [1/27 + α²/(243π²)].
+
+Substituting these expressions into the causality condition yields
+
+    (τ_J/(σT)) T⁴ (1/3 + α²/9) ≥ 1,
+
+or equivalently,
+
+    τ_J T³ (1/3 + α²/9) / σ ≥ 1.
+
+Replacing σ by its explicit expression gives
+
+    (4πτ_J T²/15)
+    ×
+    (1/3 + α²/9)
+    -----------------------------------
+    (1/27 + α²/(243π²))
+    ≥ 1.
+
+This inequality provides the minimum value of the relaxation time τ_J
+required to preserve causality for a given temperature and chemical
+potential parameter α.
+
+Several observations follow immediately.
+
+1.  The equilibrium susceptibility ∂²P₀/∂α² is always positive since
+
+        ∂²P₀/∂α² = T⁴(1/3 + α²/9) > 0.
+
+2.  The conductivity also remains positive,
+
+        σ > 0,
+
+    for every value of α.
+
+3.  Consequently, the causality condition places a lower bound on the
+    relaxation parameter τ_J. If τ_J is too small, signal propagation
+    becomes acausal. Increasing τ_J restores causality by increasing the
+    characteristic relaxation time of the dissipative current.
+
+4.  Since both ∂²P₀/∂α² and σ depend on α, the required lower bound on
+    τ_J also varies with the chemical potential. The competition between
+    the increase of the thermodynamic susceptibility and the increase of
+    the conductivity determines how restrictive the causality bound
+    becomes as α increases.
+
+This expression can be used directly to determine the admissible
+parameter space for τ_J(T,α), or equivalently for the dimensionless
+quantity Λ = τ_J/(σT), ensuring that the resulting hydrodynamic theory
+remains causal.
