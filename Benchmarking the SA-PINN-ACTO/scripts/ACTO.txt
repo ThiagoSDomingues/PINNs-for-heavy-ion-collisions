@@ -48,3 +48,190 @@ and the total loss reduces to the PDE residual alone:
     \mathcal{L} = \mathcal{L}_{\rm PDE}.
 \]
 This transformation seamlessly extends the zeroth-order ACTO approach to first-order periodicities. Notably, it requires computing the spatial derivative of the raw network only at the boundary points, which is readily available via automatic differentiation. The resulting transformed network remains differentiable with respect to $t$ and $x$, as $\Delta_0$ and $\Delta_1$ depend on the boundary evaluations of $t$ (and network parameters) but are treated as constants with respect to the evaluation coordinate $x$ during the spatial derivative of the correction term. This ensures compatibility with standard gradient-based optimization for solving time-dependent PDEs.
+
+Yes. Mathematically, the construction is sound. The polynomial correction you derived is exactly the type of lifting function used in finite element methods and constrained neural networks: you take an unconstrained network (\tilde u_\theta) and add a correction that cancels the boundary mismatches.
+
+The key question is whether the coefficients in Eq. ((\ref{eq:first_order_periodic})) are correct. Let's verify.
+
+You define
+
+[
+P(x)=A(x+L)^3+B(x+L)^2,
+]
+
+with
+
+[
+A=\frac{\Delta_0-L\Delta_1}{4L^3},\qquad
+B=\frac{2L\Delta_1-3\Delta_0}{4L^2}.
+]
+
+At (x=-L),
+
+[
+P(-L)=0,\qquad
+P_x(-L)=0,
+]
+
+so the left boundary is untouched.
+
+At (x=L),
+
+[
+P(L)=8AL^3+4BL^2.
+]
+
+Substituting,
+
+[
+8AL^3
+=2(\Delta_0-L\Delta_1),
+]
+
+[
+4BL^2
+=2L\Delta_1-3\Delta_0,
+]
+
+thus
+
+[
+P(L)
+====
+
+2\Delta_0-2L\Delta_1
++2L\Delta_1-3\Delta_0
+=====================
+
+-\Delta_0.
+]
+
+Exactly what you need.
+
+Now compute the derivative,
+
+[
+P_x(x)=3A(x+L)^2+2B(x+L),
+]
+
+and at (x=L),
+
+[
+P_x(L)=12AL+4BL.
+]
+
+Substituting,
+
+[
+12AL
+====
+
+\frac{3(\Delta_0-L\Delta_1)}{L},
+]
+
+[
+4BL
+===
+
+\frac{2L\Delta_1-3\Delta_0}{L},
+]
+
+giving
+
+[
+P_x(L)
+======
+
+# \frac{3\Delta_0-3L\Delta_1+2L\Delta_1-3\Delta_0}{L}
+
+-\Delta_1.
+]
+
+Again,
+
+[
+u_x(L)
+======
+
+# \tilde u_x(L)-\Delta_1
+
+\tilde u_x(-L).
+]
+
+So the algebra checks out perfectly.
+
+---
+
+## Conceptually
+
+This is exactly the natural extension of ACTO.
+
+For zeroth-order periodicity,
+
+[
+u=\tilde u+\phi(x)\Delta_0,
+]
+
+where (\phi) is chosen so that
+
+* (\phi(-L)=0),
+* (\phi(L)=-1).
+
+For first-order periodicity, you simply need one more degree of freedom. A cubic polynomial is the lowest-degree polynomial satisfying
+
+[
+P(-L)=0,\quad
+P_x(-L)=0,\quad
+P(L)=-\Delta_0,\quad
+P_x(L)=-\Delta_1.
+]
+
+There are four constraints, so a cubic (four coefficients) is the minimal polynomial. Your choice with no constant or linear terms is particularly elegant because it automatically satisfies the left boundary conditions.
+
+---
+
+## One thing I would slightly rewrite
+
+This sentence
+
+> "The resulting transformed network remains differentiable with respect to (t) and (x), as (\Delta_0) and (\Delta_1) are treated as constants with respect to (x)."
+
+is a little imprecise.
+
+More precisely,
+
+> Since (\Delta_0) and (\Delta_1) depend only on the boundary evaluations (\tilde u_\theta(t,\pm L)) and (\partial_x\tilde u_\theta(t,\pm L)), they are independent of the interior spatial coordinate (x). Therefore, when differentiating the transformed field with respect to (x), they act as coefficients multiplying the polynomial correction. However, they remain fully differentiable with respect to the network parameters and time through automatic differentiation.
+
+That wording is mathematically cleaner.
+
+---
+
+## A stronger statement
+
+I would even state the result as a proposition.
+
+> **Proposition.**
+> Let (\tilde u_\theta(t,x)\in C^1([-L,L])). Then the transformation defined in Eq. (\ref{eq:first_order_periodic}) produces a function (u_\theta(t,x)) satisfying
+> [
+> u_\theta(t,-L)=u_\theta(t,L),\qquad
+> \partial_xu_\theta(t,-L)=\partial_xu_\theta(t,L)
+> ]
+> identically for every network parameter (\theta).
+
+That immediately tells the reader this is an exact hard constraint rather than a penalty-based approximation.
+
+---
+
+## Generalization
+
+What I find particularly interesting is that this construction suggests a general pattern.
+
+* Zeroth-order periodicity → linear correction.
+* First-order periodicity → cubic correction.
+* Second-order periodicity → quintic correction.
+* (m)-th order periodicity → polynomial of degree (2m+1).
+
+In other words, you're effectively constructing a **Hermite interpolation polynomial** that cancels the boundary mismatches. This means ACTO can naturally be generalized to arbitrary-order periodic boundary conditions by matching derivatives up to order (m). That is a strong theoretical contribution because it provides a systematic recipe rather than isolated formulas.
+
+Overall, I think this section is mathematically correct and quite elegant. Among the ACTO constructions you've shown so far, this is one of the cleanest because it follows directly from a constrained polynomial interpolation argument and extends naturally to higher-order periodic boundary conditions.
+
