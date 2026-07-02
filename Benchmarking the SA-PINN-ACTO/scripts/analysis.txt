@@ -1,5 +1,5 @@
 Testing
-• Diffusion problem first
+• Burgers problem first
   • Solution plot 
     • initial time, final time
       • wave, heat, Bur, Eul. 24 plots 
@@ -135,3 +135,570 @@ Projections:
 • XZ
 • YZ
 It immediately reveals every correlation. One figure summarizes all relationships. Inspect clusters. 
+
+I think this is the correct direction, but I would redesign the analysis package to take advantage of the fact that your cluster campaign is much larger than the current script assumes.
+
+The script you uploaded (analysis.py) was designed for **4 variants per PDE** (Vanilla, SA, ACTO, SA_ACTO). Your production campaign is much richer:
+
+* 4 PDEs
+* 4 numbers of layers
+* 4 numbers of neurons
+* 20 random seeds
+* 3 learning rates
+* (possibly several optimizers later)
+
+That is
+
+[
+4\times4\times4\times20\times3
+==============================
+
+3840
+]
+
+training runs.
+
+A single `wave_SA.npz` file is no longer sufficient. The analysis must become database-like.
+
+---
+
+# I would reorganize the project as
+
+```text
+analysis/
+
+    config.py
+
+    load_results.py
+
+    metrics.py
+
+    statistics.py
+
+    plots/
+
+        solution_plots.py
+
+        scatter3d.py
+
+        projections.py
+
+        loss_plots.py
+
+        convergence.py
+
+        architecture.py
+
+        heatmaps.py
+
+    tables.py
+
+    make_all_figures.py
+```
+
+instead of a single large script.
+
+---
+
+# Expected directory structure
+
+Instead of
+
+```text
+wave_SA.npz
+```
+
+I would save every simulation independently.
+
+```text
+results/
+
+    burgers/
+
+        L4_N20_seed01_lr1e-3/
+
+                history.csv
+                prediction.npz
+                config.json
+
+        L4_N20_seed02_lr1e-3/
+
+        ...
+
+    diffusion/
+
+    wave/
+
+    euler/
+```
+
+Each run contains
+
+```
+history.csv
+
+epoch
+loss
+L2
+time
+```
+
+and
+
+```
+prediction.npz
+
+u
+u_exact
+x
+t
+```
+
+plus
+
+```
+config.json
+
+layers
+neurons
+seed
+learning_rate
+SA
+ACTO
+optimizer
+```
+
+Then every analysis becomes automatic.
+
+---
+
+# Loading script
+
+Instead of loading one npz,
+
+the loader recursively scans every folder.
+
+```python
+results/
+    burgers/
+        *
+            history.csv
+            prediction.npz
+            config.json
+```
+
+and builds
+
+```python
+records = []
+
+for run in all_runs:
+
+    records.append({
+
+        PDE
+
+        layers
+
+        neurons
+
+        seed
+
+        lr
+
+        SA
+
+        ACTO
+
+        L2
+
+        Loss
+
+        Time
+
+        Instability
+
+    })
+```
+
+This DataFrame becomes the central object.
+
+Everything else reads from it.
+
+---
+
+# Instability metric
+
+I actually recommend computing several metrics simultaneously.
+
+## 1. Total Variation
+
+Your proposed metric
+
+[
+I_{TV}
+======
+
+\frac{\sum |L_{k+1}-L_k|}
+{|L_0-L_N|}
+]
+
+is excellent.
+
+Small
+
+↓
+
+smooth optimization
+
+Large
+
+↓
+
+oscillatory optimization.
+
+---
+
+## 2. Oscillation metric
+
+Subtract the moving average.
+
+[
+r_i=L_i-\bar L_i
+]
+
+then
+
+[
+I_{osc}
+=======
+
+\frac{\sigma(r)}{\bar L}
+]
+
+This isolates optimization noise.
+
+---
+
+## 3. Gradient sign changes
+
+Compute
+
+[
+\Delta_i=L_{i+1}-L_i
+]
+
+then count
+
+[
+\Delta_i\Delta_{i+1}<0
+]
+
+Frequent sign changes
+
+↓
+
+strong oscillation.
+
+---
+
+## 4. Frequency metric
+
+FFT of the loss.
+
+Large high-frequency power
+
+↓
+
+unstable training.
+
+---
+
+Then store
+
+```
+TV
+
+OSC
+
+FFT
+
+SignChange
+```
+
+instead of only one number.
+
+Later you can decide which metric is most informative.
+
+---
+
+# Statistics
+
+Since every architecture has
+
+20 seeds,
+
+don't plot every seed separately.
+
+Compute
+
+```
+mean
+
+median
+
+std
+
+25%
+
+75%
+
+95% CI
+```
+
+This is much more publishable.
+
+---
+
+# Solution plots
+
+Instead of plotting a single prediction,
+
+plot
+
+```
+Exact
+
+Median prediction
+
+10%-90% percentile band
+```
+
+across the 20 seeds.
+
+This immediately visualizes robustness.
+
+---
+
+# Loss plots
+
+Instead of
+
+```
+20 noisy curves
+```
+
+plot
+
+```
+median loss
+
++
+
+shaded percentile
+```
+
+Same for
+
+L2.
+
+This is standard in ML papers.
+
+---
+
+# 3D Scatter
+
+Your idea is excellent.
+
+I would keep
+
+```
+x
+
+L2
+
+y
+
+Instability
+
+z
+
+Final loss
+
+color
+
+Training time
+```
+
+but add the projections in the corners.
+
+Exactly like this
+
+```
+          YZ
+
+      ●
+
+ XY ●     ●
+
+      ●
+
+          XZ
+```
+
+Those projections make the correlations much easier to interpret.
+
+---
+
+# Additional scatter plots
+
+Since you'll have thousands of runs,
+
+also generate
+
+```
+L2 vs Layers
+
+L2 vs Neurons
+
+L2 vs LR
+
+Instability vs Layers
+
+Instability vs Neurons
+
+Time vs Layers
+
+Time vs Neurons
+```
+
+These are extremely useful for identifying trends.
+
+---
+
+# Heatmaps
+
+One of the most informative analyses will be heatmaps such as
+
+```
+Layers
+
+↓
+
+8
+
+6
+
+4
+
+2
+
+      20 40 60 80
+
+         Neurons
+
+color = mean L2
+```
+
+Another
+
+```
+color = instability
+```
+
+Another
+
+```
+color = training time
+```
+
+These immediately reveal the optimal architecture.
+
+---
+
+# Correlation matrix
+
+Compute
+
+```
+L2
+
+Loss
+
+Instability
+
+Training Time
+
+Layers
+
+Neurons
+
+Learning Rate
+```
+
+and generate
+
+```
+Pearson
+
+Spearman
+```
+
+heatmaps.
+
+This helps identify relationships among hyperparameters and performance.
+
+---
+
+# Tables
+
+Automatically generate:
+
+* **Best run** (lowest L₂ error).
+* **Fastest converged run**.
+* **Most stable run** (minimum instability metric).
+* **Best configuration per PDE**.
+* **Mean ± standard deviation** of all metrics grouped by architecture.
+
+Export each summary as both **CSV** and **LaTeX** for direct inclusion in your paper.
+
+---
+
+## Final analysis pipeline
+
+I would structure the workflow as:
+
+```text
+analysis/
+
+config.py
+    ↓
+
+load_results.py
+    ↓
+
+metrics.py
+    ↓
+
+statistics.py
+    ↓
+
+plots/
+    ├── solution_plots.py
+    ├── loss_plots.py
+    ├── scatter3d.py
+    ├── projections.py
+    ├── convergence.py
+    ├── architecture.py
+    └── heatmaps.py
+    ↓
+
+tables.py
+    ↓
+
+make_all_figures.py
+```
+
+The `make_all_figures.py` script would become the only command you need to run after the cluster jobs finish. It would automatically discover all completed simulations, compute the instability metrics, aggregate results over the 20 random seeds, generate publication-quality figures (including the 24 solution plots, 32 3D scatter plots with projections, and 8 time-versus-metric plots you described), produce summary statistics, and export both CSV and LaTeX tables suitable for your dissertation and future journal articles. This design is scalable to several thousand simulations and can easily accommodate additional PDEs or hyperparameter studies later without changing the analysis workflow.
+
+
