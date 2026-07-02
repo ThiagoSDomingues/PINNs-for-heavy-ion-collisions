@@ -162,3 +162,48 @@ This expression can be used directly to determine the admissible
 parameter space for τ_J(T,α), or equivalently for the dimensionless
 quantity Λ = τ_J/(σT), ensuring that the resulting hydrodynamic theory
 remains causal.
+
+Causality threshold for the divergence‑type diffusion model
+=============================================================
+
+Causality condition (from the notes, Eq. (Causality condition)):
+
+    Λ · ∂²P₀/∂α²  ≥  1
+
+where
+
+    ∂²P₀/∂α²  =  T⁴ / 3  +  (T⁴ / 9) · α²
+
+and T = 0.3 GeV.
+
+Numerical values
+----------------
+T⁴ = 0.3⁴ = 0.0081
+
+Minimum of ∂²P₀/∂α² occurs at α = 0:
+
+    ∂²P₀/∂α²  ≥  0.0081 / 3 = 0.0027
+
+Thus the most restrictive requirement is
+
+    Λ · 0.0027  ≥  1
+
+which gives
+
+    Λ ≥ 1 / 0.0027 ≈ 370.4
+
+Threshold
+---------
+To guarantee causality for all possible values of α appearing in the
+simulation, the constant Lambda must satisfy
+
+    Λ ≥ 371   (rounded up for safety)
+
+Recommendation
+--------------
+Set CONST_LAMBDA = 500 (or at least 371) in the PINN notebook and in the
+Kurganov–Tadmor solver.
+
+If you later switch to the RTA model (Λ = 12/n(α)), the typical value is
+~1000 for the parameters used here, so the condition is automatically
+satisfied.
