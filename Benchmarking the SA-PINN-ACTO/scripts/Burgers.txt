@@ -1,0 +1,763 @@
+Yes. Based on the package you uploaded, this is essentially the **PINN implementation for the 1D viscous Burgers equation**. It is the code that produces the PINN predictions.
+
+From your description,
+
+> *"For SA=true and ACTO=true, using the 4 different number of layers, 4 different numbers of neurons, 20 different seeds, and 3 different initial learning rates."*
+
+that parameter sweep is **not inside these scripts**. Instead, these scripts define **one training run**. The cluster is almost certainly launching this script many times with different hyperparameters (through a bash script, SLURM job array, Python wrapper, etc.).
+
+The architecture is actually very well separated into four files.
+
+---
+
+# Overall structure
+
+```
+main.py
+│
+├── generates training points
+├── sets hyperparameters
+├── creates the PINN
+├── trains it
+├── saves results
+│
+├── imports
+│     │
+│     ├── SA_PINN_ACTO.py
+│     │      PINN model
+│     │
+│     ├── IC_1D.py
+│     │      initial condition
+│     │
+│     └── Plotting.py
+│            visualization
+```
+
+The workflow is
+
+```
+Generate collocation points
+        │
+Generate IC points
+        │
+Generate BC points
+        │
+Create PINN
+        │
+Compute PDE residual
+        │
+Optimize
+        │
+Predict solution
+        │
+Plot
+```
+
+---
+
+# 1. main.py
+
+This is the driver script.
+
+It does everything outside the neural network itself.
+
+---
+
+## Reproducibility
+
+The beginning fixes every possible random generator.
+
+```python
+seed = 1
+
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+```
+
+and even
+
+```python
+torch.use_deterministic_algorithms(True)
+```
+
+which forces deterministic CUDA operations.
+
+This is important because they're comparing different random seeds.
+
+---
+
+## Device selection
+
+```python
+device = torch.device(
+    'cuda' if torch.cuda.is_available()
+    else 'cpu'
+)
+```
+
+Nothing unusual.
+
+---
+
+# Hyperparameters
+
+The important ones are
+
+```python
+Nl = 6
+```
+
+number of hidden layers
+
+and
+
+```python
+Nn = 60
+```
+
+neurons per layer.
+
+These are exactly the parameters that your cluster is varying.
+
+---
+
+### Physical parameters
+
+```
+nu = 0.01/pi
+```
+
+viscosity
+
+```
+L = 1
+```
+
+domain
+
+```
+t_end = 1
+```
+
+final time
+
+---
+
+### Training switches
+
+Two very important flags appear here.
+
+```
+SA = True
+```
+
+means
+
+Self-Adaptive PINN
+
+instead of standard PINN.
+
+---
+
+```
+ACTO = True
+```
+
+means
+
+Adaptive Constraint Transformation Output
+
+This means
+
+Instead of enforcing BC/IC through the loss,
+
+the network is transformed so that it **already satisfies** them.
+
+---
+
+### Learning rates
+
+Notice there are actually two.
+
+```
+lr_net = 5e-3
+```
+
+network weights
+
+and
+
+```
+lr_mask = 4e-2
+```
+
+adaptive masks
+
+Only used if SA=True.
+
+---
+
+# Sampling
+
+Instead of a uniform grid,
+
+they use
+
+```python
+lhs_box(...)
+```
+
+Latin Hypercube Sampling.
+
+That produces much better space filling.
+
+So the PDE residual is evaluated on random points like
+
+```
+•
+      •
+          •
+  •
+        •
+```
+
+instead of
+
+```
+× × × × ×
+× × × × ×
+× × × × ×
+```
+
+---
+
+They create
+
+```
+N_colloc = 20000
+```
+
+PDE points
+
+```
+N_ic = 1000
+```
+
+Initial condition points
+
+```
+N_bc = 1000
+```
+
+Boundary condition points.
+
+---
+
+# Initial condition
+
+The IC comes from
+
+```python
+u = -sin(pi x/L)
+```
+
+through
+
+```python
+ic_burgers(...)
+```
+
+which is exactly
+
+[
+u(x,0)
+======
+
+-\sin\left(\frac{\pi x}{L}\right).
+]
+
+---
+
+# Boundary condition
+
+They create
+
+```
+x=-L
+```
+
+and
+
+```
+x=+L
+```
+
+at random times.
+
+Those are only needed if ACTO=False.
+
+If ACTO=True,
+
+the BC is already embedded into the network output.
+
+---
+
+# Scaling
+
+This is interesting.
+
+They compute
+
+```python
+sU
+=
+max |u_IC|
+```
+
+which is simply
+
+```
+1
+```
+
+for Burgers.
+
+Everything inside the network is normalized by this scale.
+
+That improves optimization.
+
+---
+
+# Interpolation
+
+One clever piece is
+
+```python
+_torch_lin_interp_1d(...)
+```
+
+Instead of evaluating
+
+[
+u(x,0)
+]
+
+analytically every time,
+
+they interpolate the sampled IC.
+
+That makes ACTO more general.
+
+---
+
+# 2. SA_PINN_ACTO.py
+
+This is the heart of the project.
+
+Everything happens here.
+
+---
+
+# Neural network
+
+The architecture is
+
+```
+Input
+(t,x)
+
+↓
+
+Linear
+
+↓
+
+Tanh
+
+↓
+
+Linear
+
+↓
+
+Tanh
+
+↓
+
+...
+
+↓
+
+Linear
+
+↓
+
+u
+```
+
+Every hidden layer is
+
+```
+Linear
+
++
+
+Tanh
+```
+
+Nothing exotic.
+
+---
+
+# Scaling
+
+Before entering the network,
+
+inputs are mapped into
+
+[
+[-1,1].
+]
+
+That is
+
+```python
+_scale(X)
+```
+
+This is extremely common in PINNs.
+
+---
+
+# Forward pass
+
+This is where ACTO enters.
+
+---
+
+First,
+
+the raw network predicts
+
+```
+u_raw
+```
+
+---
+
+Then it also predicts
+
+```
+u(x=-L)
+
+u(x=+L)
+```
+
+for the same time.
+
+---
+
+## Periodic BC enforcement
+
+This line is the key
+
+```python
+u_raw_bc
+=
+u_raw
+-
+(u_raw_R-u_raw_L)*xi
+```
+
+Suppose
+
+left boundary
+
+```
+3
+```
+
+right boundary
+
+```
+5
+```
+
+Difference
+
+```
+2
+```
+
+Subtracting
+
+```
+2*xi
+```
+
+forces
+
+```
+u(-L)=u(+L)
+```
+
+exactly.
+
+No loss term required.
+
+That is an elegant analytical transformation.
+
+---
+
+# Initial condition enforcement
+
+They define
+
+```
+g(t)
+=
+exp(-10 t/T)
+```
+
+which satisfies
+
+```
+g(0)=1
+```
+
+and
+
+```
+g(∞)=0.
+```
+
+Then
+
+```
+h=1-g
+```
+
+Finally
+
+```
+u
+=
+g u_IC
++
+h u_raw
+```
+
+At
+
+```
+t=0
+```
+
+```
+g=1
+
+h=0
+```
+
+therefore
+
+```
+u=u_IC
+```
+
+exactly.
+
+Later,
+
+```
+g≈0
+```
+
+and
+
+```
+u≈u_raw.
+```
+
+So the network is forced to satisfy the initial condition analytically.
+
+This is the ACTO idea.
+
+---
+
+# PDE residual
+
+The Burgers equation is
+
+[
+u_t
++
+uu_x
+----
+
+# \nu u_{xx}
+
+0.
+
+]
+
+They compute
+
+```
+u_t
+```
+
+```
+u_x
+```
+
+```
+u_xx
+```
+
+using automatic differentiation
+
+then return
+
+```
+R
+=
+u_t
++
+uu_x
+-
+νu_xx.
+```
+
+Training minimizes
+
+```
+R².
+```
+
+---
+
+# Automatic differentiation
+
+They define
+
+```python
+gradients(...)
+```
+
+using
+
+```python
+torch.autograd.grad
+```
+
+This computes
+
+```
+du/dt
+
+du/dx
+```
+
+without finite differences.
+
+---
+
+# Losses
+
+The class contains
+
+```
+loss_pde()
+```
+
+PDE residual
+
+and
+
+```
+ic_residual()
+```
+
+for the soft-constraint case.
+
+When ACTO=True,
+
+those IC/BC losses are essentially bypassed because the constraints are already embedded in the network output.
+
+---
+
+# 3. IC_1D.py
+
+This is intentionally tiny.
+
+Only
+
+```python
+u
+=
+-sin(pi x/L)
+```
+
+is defined.
+
+The nice thing is that changing the PDE only requires replacing this file.
+
+---
+
+# 4. Plotting.py
+
+This file contains only visualization.
+
+It is completely independent from training.
+
+It includes routines for
+
+* plotting collocation points,
+* plotting the predicted solution,
+* computing derivatives for visualization,
+* comparing the PINN with the exact solution stored in `viscous_burgers_exact.npz`.
+
+The plotting uses publication-quality settings (LaTeX fonts, high DPI, consistent typography).
+
+---
+
+# How this connects to your cluster runs
+
+The package itself is configured for a **single experiment**. For example, with
+
+* `SA=True`
+* `ACTO=True`
+* `Nl=6`
+* `Nn=60`
+* `seed=1`
+* `lr_net=5e-3`
+
+If you're running:
+
+* 4 layer configurations,
+* 4 neuron configurations,
+* 20 random seeds,
+* 3 learning rates,
+
+then the cluster is almost certainly launching this script repeatedly while overriding those values before each run. That gives a total of:
+
+[
+4 \times 4 \times 20 \times 3 = 960
+]
+
+independent training jobs for the `SA=True`, `ACTO=True` configuration alone.
+
+---
+
+## Design assessment
+
+From a software engineering perspective, the code is organized around clear responsibilities:
+
+* **`main.py`** handles experiment setup, data generation, optimization, and execution.
+* **`SA_PINN_ACTO.py`** encapsulates the neural network, automatic differentiation, PDE residual, and the ACTO output transformation.
+* **`IC_1D.py`** isolates the problem-specific initial condition, making it easy to swap to another PDE.
+* **`Plotting.py`** contains all visualization routines and does not interfere with training.
+
+This separation makes it relatively straightforward to adapt the framework to other PDEs by changing the physics-specific components while leaving the training infrastructure largely unchanged.
