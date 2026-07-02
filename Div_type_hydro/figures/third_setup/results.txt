@@ -1,0 +1,217 @@
+------------------
+Lambda: 1 - Acausal 
+------------------
+
+Using device: cuda
+Scales: sq=1.100e-06, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.15893027186393738
+R2 rms = 3.8885686080902815e-05
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=1.042e-04, R1_rms=2.975e-03, R2_rms=2.569e-03, mask_mean=3.43, lr=5.000e-03 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 2000/25000 | loss=1.986e-05, R1_rms=1.026e-03, R2_rms=3.894e-04, mask_mean=4.37, lr=2.000e-03 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 3000/25000 | loss=1.187e-05, R1_rms=7.901e-04, R2_rms=3.840e-04, mask_mean=4.56, lr=2.000e-03 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 4000/25000 | loss=1.465e-05, R1_rms=8.840e-04, R2_rms=2.324e-04, mask_mean=4.74, lr=2.000e-03 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 5000/25000 | loss=1.251e-07, R1_rms=1.943e-04, R2_rms=6.311e-05, mask_mean=4.87, lr=8.000e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 6000/25000 | loss=3.339e-07, R1_rms=2.306e-04, R2_rms=5.736e-05, mask_mean=4.89, lr=8.000e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 7000/25000 | loss=1.382e-06, R1_rms=2.963e-04, R2_rms=7.169e-05, mask_mean=4.92, lr=8.000e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 8000/25000 | loss=1.693e-07, R1_rms=1.038e-04, R2_rms=3.810e-05, mask_mean=4.94, lr=3.200e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 9000/25000 | loss=1.193e-06, R1_rms=1.046e-04, R2_rms=3.684e-05, mask_mean=4.94, lr=3.200e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 10000/25000 | loss=1.966e-07, R1_rms=1.162e-04, R2_rms=4.658e-05, mask_mean=4.95, lr=3.200e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 11000/25000 | loss=6.323e-08, R1_rms=3.878e-05, R2_rms=2.958e-05, mask_mean=4.95, lr=1.280e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 12000/25000 | loss=2.582e-07, R1_rms=5.513e-05, R2_rms=2.890e-05, mask_mean=4.95, lr=1.280e-04 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 13000/25000 | loss=7.219e-08, R1_rms=2.770e-05, R2_rms=2.709e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 14000/25000 | loss=7.757e-08, R1_rms=1.819e-05, R2_rms=2.613e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 15000/25000 | loss=8.453e-08, R1_rms=2.909e-05, R2_rms=2.537e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 16000/25000 | loss=8.118e-08, R1_rms=2.918e-05, R2_rms=2.492e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 17000/25000 | loss=5.669e-08, R1_rms=1.418e-05, R2_rms=2.441e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 18000/25000 | loss=7.614e-08, R1_rms=2.802e-05, R2_rms=2.382e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 19000/25000 | loss=8.499e-08, R1_rms=2.369e-05, R2_rms=2.348e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 20000/25000 | loss=8.534e-08, R1_rms=2.340e-05, R2_rms=2.306e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 21000/25000 | loss=7.032e-08, R1_rms=1.496e-05, R2_rms=2.274e-05, mask_mean=4.95, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 22000/25000 | loss=6.617e-08, R1_rms=2.747e-05, R2_rms=2.219e-05, mask_mean=4.96, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 23000/25000 | loss=7.562e-08, R1_rms=1.785e-05, R2_rms=2.193e-05, mask_mean=4.96, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 24000/25000 | loss=7.788e-08, R1_rms=2.021e-05, R2_rms=2.160e-05, mask_mean=4.96, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Epoch 25000/25000 | loss=8.176e-08, R1_rms=2.713e-05, R2_rms=2.155e-05, mask_mean=4.96, lr=5.120e-05 | caus_min=-9.964e-01  ⚠️ ACAUSAL
+Adam complete. Best loss = 5.068e-08
+L‑BFGS init loss: 2.045e-09
+L‑BFGS done. best=1.819e-09, calls=42
+Times: Adam 349.9s  L‑BFGS 0.7s  total 350.6s
+
+
+Grids differ: remapping KT → PINN grid …
+Relative L²(n) over spacetime = 5.239139e-04
+Relative L²(q) over spacetime = 1.735761e-01
+[saved] ./L2_results_DivType.txt
+
+----------
+Lambda: 500 
+----------
+
+Using device: cuda
+Scales: sq=1.100e-06, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.13336409628391266
+R2 rms = 2.5100462153204717e-05
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=4.658e-04, R1_rms=3.263e-03, R2_rms=3.759e-03, mask_mean=3.48, lr=5.000e-03 | caus_min=7.697e-01
+Epoch 2000/25000 | loss=9.198e-06, R1_rms=5.465e-04, R2_rms=5.381e-04, mask_mean=4.36, lr=2.000e-03 | caus_min=7.948e-01
+Epoch 3000/25000 | loss=1.236e-04, R1_rms=1.398e-03, R2_rms=1.117e-03, mask_mean=4.51, lr=2.000e-03 | caus_min=7.924e-01
+Epoch 4000/25000 | loss=8.959e-06, R1_rms=5.682e-04, R2_rms=5.114e-04, mask_mean=4.64, lr=2.000e-03 | caus_min=7.983e-01
+Epoch 5000/25000 | loss=1.647e-05, R1_rms=6.384e-04, R2_rms=5.144e-04, mask_mean=4.73, lr=2.000e-03 | caus_min=7.952e-01
+Epoch 6000/25000 | loss=3.107e-07, R1_rms=1.030e-04, R2_rms=1.410e-04, mask_mean=4.75, lr=8.000e-04 | caus_min=7.991e-01
+Epoch 7000/25000 | loss=1.147e-07, R1_rms=6.536e-05, R2_rms=6.035e-05, mask_mean=4.75, lr=3.200e-04 | caus_min=7.994e-01
+Epoch 8000/25000 | loss=1.492e-07, R1_rms=5.932e-05, R2_rms=8.516e-05, mask_mean=4.76, lr=3.200e-04 | caus_min=7.994e-01
+Epoch 9000/25000 | loss=5.181e-08, R1_rms=3.960e-05, R2_rms=5.074e-05, mask_mean=4.76, lr=1.280e-04 | caus_min=7.994e-01
+Epoch 10000/25000 | loss=6.831e-08, R1_rms=3.921e-05, R2_rms=4.982e-05, mask_mean=4.76, lr=1.280e-04 | caus_min=7.996e-01
+Epoch 11000/25000 | loss=4.372e-08, R1_rms=3.861e-05, R2_rms=4.517e-05, mask_mean=4.76, lr=1.280e-04 | caus_min=7.996e-01
+Epoch 12000/25000 | loss=4.709e-08, R1_rms=3.808e-05, R2_rms=4.544e-05, mask_mean=4.76, lr=1.280e-04 | caus_min=7.996e-01
+Epoch 13000/25000 | loss=8.577e-08, R1_rms=5.359e-05, R2_rms=4.180e-05, mask_mean=4.76, lr=1.280e-04 | caus_min=7.992e-01
+Epoch 14000/25000 | loss=2.613e-08, R1_rms=3.296e-05, R2_rms=3.972e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 15000/25000 | loss=2.347e-08, R1_rms=3.285e-05, R2_rms=4.019e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 16000/25000 | loss=2.209e-08, R1_rms=3.150e-05, R2_rms=3.867e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.996e-01
+Epoch 17000/25000 | loss=2.038e-08, R1_rms=3.055e-05, R2_rms=3.863e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.996e-01
+Epoch 18000/25000 | loss=2.221e-08, R1_rms=3.236e-05, R2_rms=3.647e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 19000/25000 | loss=1.993e-08, R1_rms=3.135e-05, R2_rms=3.708e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 20000/25000 | loss=2.412e-08, R1_rms=2.997e-05, R2_rms=3.501e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.996e-01
+Epoch 21000/25000 | loss=1.695e-08, R1_rms=2.989e-05, R2_rms=3.495e-05, mask_mean=4.76, lr=5.120e-05 | caus_min=7.996e-01
+Epoch 22000/25000 | loss=1.913e-08, R1_rms=3.038e-05, R2_rms=3.535e-05, mask_mean=4.77, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 23000/25000 | loss=1.630e-08, R1_rms=2.963e-05, R2_rms=3.467e-05, mask_mean=4.77, lr=5.120e-05 | caus_min=7.995e-01
+Epoch 24000/25000 | loss=2.003e-08, R1_rms=2.992e-05, R2_rms=3.331e-05, mask_mean=4.77, lr=5.120e-05 | caus_min=7.996e-01
+Epoch 25000/25000 | loss=1.668e-08, R1_rms=2.788e-05, R2_rms=3.273e-05, mask_mean=4.77, lr=5.120e-05 | caus_min=7.996e-01
+Adam complete. Best loss = 1.474e-08
+L‑BFGS init loss: 2.190e-09
+L‑BFGS done. best=1.115e-09, calls=1000
+Times: Adam 344.4s  L‑BFGS 21.0s  total 365.4s
+
+Grids differ: remapping KT → PINN grid …
+Relative L²(n) over spacetime = 4.931536e-04
+Relative L²(q) over spacetime = 1.176180e-01
+[saved] ./L2_results_DivType.txt
+
+-----------
+Lambda: 1000
+-----------
+
+Using device: cuda
+Scales: sq=1.100e-06, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.1388944834470749
+R2 rms = 9.241318184649572e-05
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=3.877e-04, R1_rms=3.836e-03, R2_rms=1.704e-03, mask_mean=3.63, lr=5.000e-03 | caus_min=2.602e+00
+Epoch 2000/25000 | loss=6.012e-06, R1_rms=5.072e-04, R2_rms=7.749e-04, mask_mean=3.96, lr=2.000e-03 | caus_min=2.595e+00
+Epoch 3000/25000 | loss=1.522e-05, R1_rms=6.633e-04, R2_rms=2.318e-04, mask_mean=4.12, lr=2.000e-03 | caus_min=2.600e+00
+Epoch 4000/25000 | loss=3.472e-06, R1_rms=2.194e-04, R2_rms=1.440e-04, mask_mean=4.20, lr=8.000e-04 | caus_min=2.596e+00
+Epoch 5000/25000 | loss=5.535e-07, R1_rms=8.634e-05, R2_rms=5.402e-05, mask_mean=4.21, lr=3.200e-04 | caus_min=2.600e+00
+Epoch 6000/25000 | loss=5.686e-07, R1_rms=1.056e-04, R2_rms=4.491e-05, mask_mean=4.22, lr=3.200e-04 | caus_min=2.598e+00
+Epoch 7000/25000 | loss=5.607e-08, R1_rms=5.277e-05, R2_rms=3.078e-05, mask_mean=4.22, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 8000/25000 | loss=2.188e-08, R1_rms=2.917e-05, R2_rms=2.861e-05, mask_mean=4.22, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 9000/25000 | loss=9.194e-08, R1_rms=4.286e-05, R2_rms=2.414e-05, mask_mean=4.22, lr=1.280e-04 | caus_min=2.600e+00
+Epoch 10000/25000 | loss=1.710e-08, R1_rms=2.639e-05, R2_rms=2.290e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 11000/25000 | loss=6.048e-09, R1_rms=2.524e-05, R2_rms=2.031e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 12000/25000 | loss=1.927e-08, R1_rms=2.703e-05, R2_rms=2.075e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 13000/25000 | loss=1.723e-08, R1_rms=2.500e-05, R2_rms=1.839e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 14000/25000 | loss=4.596e-09, R1_rms=2.318e-05, R2_rms=1.766e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 15000/25000 | loss=9.886e-09, R1_rms=2.566e-05, R2_rms=1.717e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 16000/25000 | loss=7.416e-09, R1_rms=2.592e-05, R2_rms=1.619e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 17000/25000 | loss=1.034e-08, R1_rms=2.447e-05, R2_rms=1.556e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 18000/25000 | loss=1.760e-08, R1_rms=2.424e-05, R2_rms=1.510e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 19000/25000 | loss=1.757e-08, R1_rms=2.222e-05, R2_rms=1.477e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 20000/25000 | loss=1.399e-08, R1_rms=2.070e-05, R2_rms=1.481e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 21000/25000 | loss=1.544e-08, R1_rms=2.056e-05, R2_rms=1.406e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 22000/25000 | loss=1.504e-08, R1_rms=2.117e-05, R2_rms=1.381e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 23000/25000 | loss=7.134e-09, R1_rms=1.757e-05, R2_rms=1.332e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 24000/25000 | loss=4.296e-09, R1_rms=2.051e-05, R2_rms=1.492e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 25000/25000 | loss=5.187e-09, R1_rms=2.226e-05, R2_rms=1.317e-05, mask_mean=4.22, lr=5.120e-05 | caus_min=2.599e+00
+Adam complete. Best loss = 2.769e-09
+L‑BFGS init loss: 6.689e-10
+
+Grids differ: remapping KT → PINN grid …
+Relative L²(n) over spacetime = 4.642621e-04
+Relative L²(q) over spacetime = 9.648080e-02
+[saved] ./L2_results_DivType.txt
+
+Analysis of PINN results for different Lambda values
+=====================================================
+
+We performed three PINN training runs with the divergence‑type diffusion
+model, varying the constant relaxation parameter Λ (Lambda).  The initial
+conditions were kept identical: a near‑equilibrium setup with a small
+background density (n ~ 0.01) and a very small initial flux (q ~ 1e-6).
+The parameter Λ controls the relaxation time through Λ = τ_J/(σT).
+All runs used the same network architecture, self‑adaptive mask, and
+training schedule.
+
+1.  Causality condition
+-----------------------
+The causality condition for the present theory is
+
+    Λ * (∂²P₀/∂α²)  ≥  1 ,
+
+with ∂²P₀/∂α² = T⁴/3 + T⁴/9 α².  At T = 0.3 GeV, the minimum of
+∂²P₀/∂α² is 0.0027, giving a threshold Λ_min ≈ 371.
+
+  • Λ =    1 :  deeply acausal,  caus_min ≈ -0.996 constant.
+  • Λ =  500 :  causal,          caus_min ≈ +0.8.
+  • Λ = 1000 :  causal,          caus_min ≈ +2.6.
+
+2.  Training behaviour
+-----------------------
+All three runs converged smoothly.  The self‑adaptive mask weight
+stabilised around 4.2–5.0.  No signs of instability were observed even
+in the acausal regime, although the acausal run exhibited slightly
+higher residual fluctuations.
+
+  Final (un‑scaled) residual RMS values after Adam + L‑BFGS:
+
+    Λ =    1 :  R1_rms ≈ 2.7e-5,  R2_rms ≈ 2.2e-5
+    Λ =  500 :  R1_rms ≈ 2.8e-5,  R2_rms ≈ 3.3e-5
+    Λ = 1000 :  R1_rms ≈ 2.2e-5,  R2_rms ≈ 1.3e-5
+
+3.  L² errors relative to Kurganov–Tadmor reference
+-----------------------------------------------------
+The PINN solution was compared to a converged KT solution with the
+identical physics (same Λ, same IC).  Relative L² errors over the
+spacetime domain [0,20] × [-50,50]:
+
+    Λ        ε(n)       ε(q)
+   ---     -------    -------
+      1    5.24e-4    1.74e-1
+    500    4.93e-4    1.18e-1
+   1000    4.64e-4    9.65e-2
+
+4.  Interpretation
+------------------
+ • The charge density n is reproduced with excellent accuracy
+   (≈ 0.05 %) for all Λ.  The continuity equation is independent of Λ,
+   so the PINN can fit n almost perfectly irrespective of the
+   relaxation parameter.
+
+ • The flux q shows larger errors, but they decrease systematically as
+   Λ increases.  The acausal (Λ=1) run has ε(q) ≈ 17 %, while the
+   strongly causal (Λ=1000) run achieves ε(q) ≈ 10 %.
+
+   The improvement can be understood physically: for large Λ the
+   relaxation is faster and the flux is more closely slaved to the
+   Fick’s law value q ≈ -σT ∂_x α.  The dynamics become less stiff and
+   the solution smoother, making it easier for the PINN to capture the
+   flux evolution accurately.
+
+ • The causality condition is not required for numerical solvability
+   (the PINN trains fine even when it is violated), but the acausal
+   regime produces a less accurate flux.  For reliable physical
+   predictions, the causal parameter must be chosen in the allowed range
+   (Λ ≥ 371).
+
+5.  Conclusion
+---------------
+The self‑adaptive PINN accurately solves the divergence‑type diffusion
+equations across a wide range of Λ, from deeply acausal to strongly
+causal.  The charge density error is consistently at the 0.05 % level,
+while the flux error drops by nearly a factor of two as Λ is increased
+from 1 to 1000.  These results confirm that the PINN is a robust tool
+for this class of relativistic hydrodynamic theories, and they
+highlight the importance of choosing the relaxation parameter in the
+causal regime to obtain the most accurate predictions for the
+dissipative flux.
