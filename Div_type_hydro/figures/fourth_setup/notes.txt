@@ -1,4 +1,48 @@
-Studying different $\frac{\mathcal{J}}{n}$ ratios. All these scenarios uses $\Lambda$ = 1000 and T constat = .3 GeV.
+Analysis of Different 𝒥/n Ratios in Divergence‑Type PINN Training
+===================================================================
+
+We examine seven scenarios with identical equilibrium charge density
+initial conditions n(t=0,x) but varying initial diffusive flux q(t=0,x).
+All runs use constant Λ = 1000, T = 0.3 GeV, and a near‑equilibrium
+density background n ∼ 0.01 (r = 1.0 × 10⁻²).
+
+The initial density profile is
+    n(0,x) = [0.2·exp(–(7x/L)²) + 1.0] × 10⁻² ,
+so the background n ≈ 0.01 and the peak (at x=0) is ≈ 0.012.
+The flux profile is
+    q(0,x) = [0.05·exp(–(10x/L)²) + 1.05] × A ,
+with amplitude A varying from 10⁰ down to 10⁻⁶ across the seven scenarios.
+
+----------------------------------------------------------------------
+1. CHARACTERISTIC 𝒥/n RATIOS
+----------------------------------------------------------------------
+The ratio 𝒥/n (i.e., q/n) gives the relative size of the diffusive flux
+compared to the conserved charge density.  A large ratio signals a
+far‑from‑equilibrium initial state; a small ratio approaches the regime
+where Fick’s law q ≈ –σT ∂ₓα holds.
+
+                     Scenario        q amplitude A      typical q/n ratio
+                     --------------------------------------------------
+                     1               1 × 10⁰            ≈ 100
+                     2               1 × 10⁻¹           ≈ 10
+                     3               1 × 10⁻²           ≈ 1
+                     4               1 × 10⁻³           ≈ 0.1
+                     5               1 × 10⁻⁴           ≈ 0.01
+                     6               1 × 10⁻⁵           ≈ 0.001
+                     7               1 × 10⁻⁶           ≈ 0.0001
+
+The “typical” n is taken as the background value 0.01; the peak n is
+~0.012, so ratios vary by at most ~20%.  The q amplitude is
+approximately A × (1.05 + 0.05) ≈ 1.1·A.
+
+For the present parameters, the Fick’s‑law estimate for the equilibrium
+flux is
+    q_eq ≈ –σT ∂ₓα .
+With α ∼ 1, ∂ₓα ∼ α/L ∼ 0.02, and σT ∼ 4×10⁻³, we find
+    q_eq ∼ 8×10⁻⁵ .
+Thus even Scenario 4 (q ∼ 10⁻³) is still an order of magnitude larger
+than equilibrium, while Scenarios 6–7 (q ∼ 10⁻⁵–10⁻⁶) are in the
+linear‑response regime.
 
 -----------------------------------------------------------
 Scenario 1
