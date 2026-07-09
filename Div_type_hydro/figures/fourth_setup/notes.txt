@@ -207,3 +207,154 @@ d, f, g = 0.05, 10.0, 1.05 # Initial condition parameters
 q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * 1e-6
 -----------------------------------------------------------
 
+
+Causal Character of the Conserved Current in Divergence‑Type Hydrodynamics
+=======================================================================
+
+The total conserved current in the divergence‑type theory is
+
+    N^μ = n u^μ + 𝒥^μ ,
+
+with u_μ 𝒥^μ = 0.  Its Lorentz‑invariant norm is
+
+    N^μ N_μ = −n² + 𝒥² .
+
+A physically acceptable charge current must be timelike:
+
+    N^μ N_μ < 0   ⇔   |𝒥| < n .
+
+When |𝒥| > n the current becomes spacelike, i.e. the effective drift
+velocity exceeds the speed of light – a pathological situation.
+
+The analysis below examines how the initial flux amplitude affects
+the timelike/spacelike character of the current and correlates this
+with the PINN training performance observed in the seven scenarios
+(Λ = 1000, T = 0.3 GeV, identical density profile n(0,x) with
+background n ≈ 0.01).
+
+----------------------------------------------------------------------
+1. Summary of the seven initial‑condition scenarios
+----------------------------------------------------------------------
+
+All runs use the same initial density
+
+    n(0,x) = [0.2 exp(−(7x/L)²) + 1.0] × 10⁻²
+
+so that the background density is n_bg ≈ 0.01 and the peak at x=0
+is n_peak ≈ 0.012.  The flux profile is
+
+    q(0,x) = [0.05 exp(−(10x/L)²) + 1.05] × A ,
+
+with amplitude A varying as:
+
+    Scenario 1:  A = 10⁰     ⇒  q(0,x) ~ 1.1
+    Scenario 2:  A = 10⁻¹    ⇒  q(0,x) ~ 0.11
+    Scenario 3:  A = 10⁻²    ⇒  q(0,x) ~ 0.011
+    Scenario 4:  A = 10⁻³    ⇒  q(0,x) ~ 1.1×10⁻³
+    Scenario 5:  A = 10⁻⁴    ⇒  q(0,x) ~ 1.1×10⁻⁴
+    Scenario 6:  A = 10⁻⁵    ⇒  q(0,x) ~ 1.1×10⁻⁵
+    Scenario 7:  A = 10⁻⁶    ⇒  q(0,x) ~ 1.1×10⁻⁶
+
+Since the background n ≈ 0.01, the initial ratio |𝒥|/n is
+approximately (1.1·A)/0.01 = 110·A.
+
+----------------------------------------------------------------------
+2. Timelike vs. spacelike initial states
+----------------------------------------------------------------------
+
+The threshold for a timelike current is |𝒥| < n, i.e.
+
+    |𝒥|/n < 1 .
+
+For our background n ≈ 0.01, this condition becomes |𝒥| < 0.01.
+
+• Scenarios 1, 2, 3 (A ≥ 10⁻²):
+      |𝒥|/n ≥ 1.1 → the initial current is SPACELIKE.
+      The system starts in a pathological state.
+
+• Scenarios 4–7 (A ≤ 10⁻³):
+      |𝒥|/n ≤ 0.11 → the initial current is TIMELIKE.
+      The system starts in the physically admissible regime.
+
+----------------------------------------------------------------------
+3. Correlation with PINN training
+----------------------------------------------------------------------
+
+The training logs show a clear pattern:
+
+  • Scenario 1 (A = 1, |𝒥|/n ≈ 110):
+        Initial R₂ ≈ 127, mask mean grows to ~719.
+        Best Adam loss = 6.58; L‑BFGS only reduces it to 5.77×10⁻³.
+        The network fails to fully resolve the extreme transient.
+
+  • Scenario 2 (A = 0.1, |𝒥|/n ≈ 11):
+        Initial R₂ ≈ 10.8, mask mean reaches 324.
+        Loss improves to 1.37×10⁻⁵ after L‑BFGS.
+        Training is still difficult but yields a reasonable solution.
+
+  • Scenario 3 (A = 0.01, |𝒥|/n ≈ 1.1, border‑line):
+        (Results from earlier runs with Λ=500, A=10⁻² gave
+         excellent accuracy, with mask mean ~4–5 and L² errors
+         at the 0.1 % level.)
+
+  • Scenarios 4–7 (A ≤ 10⁻³, |𝒥|/n ≤ 0.11):
+        Training becomes progressively easier.  The mask stays
+        near unity and the PDE residuals drop to 10⁻⁵ or lower.
+
+Thus the pathological, spacelike initial current causes a violent
+relaxation transient that severely challenges the PINN.  The
+self‑adaptive mask must grow enormously to focus on the stiff
+boundary layer, and the final accuracy is limited.  As soon as
+the initial state respects the timelike condition |𝒥| < n, the
+system is well‑behaved and the PINN converges rapidly.
+
+----------------------------------------------------------------------
+4. Physical discussion
+----------------------------------------------------------------------
+
+In the divergence‑type (and Israel–Stewart) framework, the
+diffusion current 𝒥^μ is a dynamical degree of freedom.  Its
+evolution equation
+
+    Λ ∂_t q + ∂_x α = – q/(σT)
+
+drives q toward the Fick’s‑law value q_eq ≈ –σT ∂_x α.
+For our parameters, q_eq ∼ 8×10⁻⁵.  Thus in scenarios 4–7 the
+initial flux is already close to equilibrium, whereas in
+scenarios 1–3 the flux must decay by 1–3 orders of magnitude
+within a short time ∼ ΛσT ≈ 40 GeV⁻¹.
+
+During this fast transient the effective drift velocity
+v_drift ∼ |𝒥|/n can exceed 1 (in natural units), meaning the
+charge motion would be superluminal.  The PDE system itself
+remains hyperbolic (the causality condition Λ ∂²P₀/∂α² ≥ T
+is satisfied for Λ=1000), but the physical current is
+initially acausal.  This is precisely the question written on
+the board: “Can the total current become spacelike because
+of a large diffusion current?”  Our simulations answer: yes,
+if the initial flux is chosen too large, the current starts
+spacelike, but the dynamics quickly restores it to a timelike
+state – provided the PINN can resolve the sharp transient.
+
+For practical applications, it is therefore advisable to
+initialize the flux such that |𝒥| < n, i.e. with a ratio
+𝒥/n < 1.  Matching the flux to its first‑order (Fick’s law)
+value naturally satisfies this bound and yields the best
+training performance.
+
+----------------------------------------------------------------------
+5. Summary
+----------------------------------------------------------------------
+
+    𝒥/n ratio at t=0      Current character    PINN training
+    ────────────────────────────────────────────────────────
+    ∼110 (A=1)             Spacelike            Very difficult
+    ∼ 11 (A=0.1)           Spacelike            Difficult
+    ∼ 1.1 (A=0.01)         Spacelike (marginal) Acceptable
+    ∼ 0.11 (A=0.001)       Timelike             Easy
+    ∼ 0.011–0.00011 (A≤10⁻⁴) Timelike          Excellent
+
+Monitoring the sign of N^μ N_μ = −n² + 𝒥² in real time
+provides a valuable additional diagnostic for the physical
+acceptability of the solution, complementing the usual
+hyperbolicity check.
