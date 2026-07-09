@@ -119,7 +119,7 @@ q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * 1e-5
 
 
 -----------------------------------------------------------
-Scenario 6
+Scenario 7
 ICs:
 # Initial charge density n(t=0,x)
 p, qq, r = 0.2, 7.0, 1.0    # Initial condition parameters    
