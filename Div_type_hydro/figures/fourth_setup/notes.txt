@@ -62,8 +62,41 @@ d, f, g = 0.05, 10.0, 1.05 # Initial condition parameters
 q_init = (d * torch.exp(- (f * x_vals / L)**2) + g) * 1e-1
 -----------------------------------------------------------
 
-
-
+Using device: cuda
+Scales: sq=1.100e-01, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.13786588609218597
+R2 rms = 10.755297660827637
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=1.188e+00, R1_rms=7.447e-03, R2_rms=2.001e-01, mask_mean=20.94, lr=5.000e-03 | caus_min=2.600e+00
+Epoch 2000/25000 | loss=1.523e+00, R1_rms=3.520e-03, R2_rms=6.609e-02, mask_mean=44.95, lr=8.000e-04 | caus_min=2.571e+00
+Epoch 3000/25000 | loss=1.211e+00, R1_rms=7.788e-03, R2_rms=8.809e-02, mask_mean=69.60, lr=3.200e-04 | caus_min=2.532e+00
+Epoch 4000/25000 | loss=3.814e-01, R1_rms=6.592e-03, R2_rms=5.085e-02, mask_mean=94.79, lr=5.120e-05 | caus_min=2.502e+00
+Epoch 5000/25000 | loss=1.594e-01, R1_rms=5.920e-03, R2_rms=2.989e-02, mask_mean=116.81, lr=5.000e-05 | caus_min=2.469e+00
+Epoch 6000/25000 | loss=9.838e-02, R1_rms=5.131e-03, R2_rms=2.163e-02, mask_mean=133.17, lr=5.000e-05 | caus_min=2.509e+00
+Epoch 7000/25000 | loss=4.670e-02, R1_rms=4.860e-03, R2_rms=1.212e-02, mask_mean=146.47, lr=5.000e-05 | caus_min=2.509e+00
+Epoch 8000/25000 | loss=8.648e-02, R1_rms=4.753e-03, R2_rms=1.550e-02, mask_mean=159.09, lr=5.000e-05 | caus_min=2.510e+00
+Epoch 9000/25000 | loss=8.732e-02, R1_rms=4.661e-03, R2_rms=1.446e-02, mask_mean=171.19, lr=5.000e-05 | caus_min=2.513e+00
+Epoch 10000/25000 | loss=8.701e-02, R1_rms=4.620e-03, R2_rms=1.207e-02, mask_mean=182.76, lr=5.000e-05 | caus_min=2.517e+00
+Epoch 11000/25000 | loss=4.270e-02, R1_rms=4.562e-03, R2_rms=7.786e-03, mask_mean=193.87, lr=5.000e-05 | caus_min=2.521e+00
+Epoch 12000/25000 | loss=4.280e-02, R1_rms=4.519e-03, R2_rms=1.233e-02, mask_mean=204.59, lr=5.000e-05 | caus_min=2.523e+00
+Epoch 13000/25000 | loss=1.016e-01, R1_rms=4.493e-03, R2_rms=1.272e-02, mask_mean=214.98, lr=5.000e-05 | caus_min=2.525e+00
+Epoch 14000/25000 | loss=2.515e-02, R1_rms=4.456e-03, R2_rms=8.113e-03, mask_mean=225.09, lr=5.000e-05 | caus_min=2.527e+00
+Epoch 15000/25000 | loss=9.071e-02, R1_rms=4.416e-03, R2_rms=1.282e-02, mask_mean=234.96, lr=5.000e-05 | caus_min=2.530e+00
+Epoch 16000/25000 | loss=6.291e-02, R1_rms=4.395e-03, R2_rms=6.645e-03, mask_mean=244.61, lr=5.000e-05 | caus_min=2.531e+00
+Epoch 17000/25000 | loss=4.012e-02, R1_rms=4.368e-03, R2_rms=1.163e-02, mask_mean=254.05, lr=5.000e-05 | caus_min=2.533e+00
+Epoch 18000/25000 | loss=1.149e-01, R1_rms=4.330e-03, R2_rms=1.125e-02, mask_mean=263.30, lr=5.000e-05 | caus_min=2.535e+00
+Epoch 19000/25000 | loss=8.263e-02, R1_rms=4.307e-03, R2_rms=6.895e-03, mask_mean=272.38, lr=5.000e-05 | caus_min=2.536e+00
+Epoch 20000/25000 | loss=4.950e-02, R1_rms=4.278e-03, R2_rms=5.034e-03, mask_mean=281.31, lr=5.000e-05 | caus_min=2.537e+00
+Epoch 21000/25000 | loss=4.479e-02, R1_rms=4.252e-03, R2_rms=5.044e-03, mask_mean=290.08, lr=5.000e-05 | caus_min=2.538e+00
+Epoch 22000/25000 | loss=8.775e-02, R1_rms=4.224e-03, R2_rms=6.386e-03, mask_mean=298.72, lr=5.000e-05 | caus_min=2.539e+00
+Epoch 23000/25000 | loss=1.138e-01, R1_rms=4.199e-03, R2_rms=1.275e-02, mask_mean=307.21, lr=5.000e-05 | caus_min=2.540e+00
+Epoch 24000/25000 | loss=2.124e-02, R1_rms=4.166e-03, R2_rms=7.870e-03, mask_mean=315.60, lr=5.000e-05 | caus_min=2.541e+00
+Epoch 25000/25000 | loss=1.261e-01, R1_rms=4.138e-03, R2_rms=9.884e-03, mask_mean=323.86, lr=5.000e-05 | caus_min=2.542e+00
+Adam complete. Best loss = 2.057e-02
+L‑BFGS init loss: 8.554e-05
+L‑BFGS done. best=1.371e-05, calls=1000
+Times: Adam 352.0s  L‑BFGS 20.1s  total 372.1s
 
 -----------------------------------------------------------
 Scenario 3
