@@ -130,3 +130,57 @@ Relative L²(J) over spacetime = 9.054250e-02
 
 [saved] plots/setup_2/PINN_vs_KT.pdf
 [saved] plots/setup_2/Field_differences.pdf
+
+-----------------------------------------------------------------------------------------------------------------------------------
+The two scenarios confirm that the initial ratio \(|\mathcal{J}|/n\) determines whether the PINN can solve the divergence‑type equations accurately.
+-----------------------------------------------------------------------------------------------------------------------------------
+
+## 1. Scenario 1 – Far‑from‑equilibrium initial state
+
+*Initial condition:* \(n \sim 0.01\), \(q \sim 1\), so \(|\mathcal{J}|/n \approx 100\).  
+The charge current is initially **spacelike** and far from the Fick’s‑law equilibrium value \(q_{\rm eq}\sim 8\times10^{-5}\).
+
+| Diagnostic | Value | Meaning |
+|------------|-------|---------|
+| Initial \(R_2\) RMS | 119 | Relaxation residual is 800 × larger than \(R_1\) |
+| Mask mean (final) | 674 | Mask had to grow enormously to balance the losses |
+| Best Adam loss | 4.27 | Very high; the network could not fit the stiff transient |
+| L‑BFGS best | \(4.94\times10^{-3}\) | Moderate improvement, but still poor |
+| Charge conservation | \(7.0\times10^{-2}\) (7 %) | Unacceptable violation |
+| \(L^2(n)\) error | \(5.71\times10^{-1}\) (57 %) | Density is completely wrong |
+| \(L^2(q)\) error | \(5.07\times10^{-3}\) (0.5 %) | Surprisingly small – the network fit the flux well |
+
+**Physical interpretation:**  
+The huge initial flux drives a violent relaxation that the hard‑IC enforcement forces the PINN to match exactly. The network can reproduce the rapid decay of \(q\) (hence the small \(q\) error), but the coupled density evolution becomes inaccurate because the stiff source term dominates the loss. The self‑adaptive mask grows to compensate, but even with it the network cannot simultaneously fit the sharp temporal boundary layer and the smooth diffusive evolution of \(n\). The result is a density field that deviates strongly from the KT reference, with a 7 % drift in total charge.
+
+---
+
+## 2. Scenario 7 – Near‑equilibrium initial state
+
+*Initial condition:* \(n \sim 0.01\), \(q \sim 10^{-6}\), so \(|\mathcal{J}|/n \approx 10^{-4}\).  
+The current is **timelike** and the flux is already close to its equilibrium value.
+
+| Diagnostic | Value | Meaning |
+|------------|-------|---------|
+| Initial \(R_2\) RMS | \(1.5\times10^{-4}\) | Both residuals naturally balanced |
+| Mask mean (final) | 5 | Mask stays near unity – no need for heavy weighting |
+| Best Adam loss | \(3.0\times10^{-9}\) | Extremely low |
+| L‑BFGS best | \(4.3\times10^{-10}\) | Excellent fine‑tuning |
+| Charge conservation | \(2.1\times10^{-5}\) (0.002 %) | Perfectly conserved |
+| \(L^2(n)\) error | \(4.3\times10^{-4}\) (0.04 %) | Density accurate to 4 parts in \(10^4\) |
+| \(L^2(q)\) error | \(9.1\times10^{-2}\) (9 %) | Relatively larger because the flux is very small |
+
+**Physical interpretation:**  
+The small initial flux makes the relaxation term weak; the PDE is no longer stiff. Both residuals are of comparable magnitude from the start, so the self‑adaptive mask remains close to 1 and the optimizer converges rapidly. The PINN reproduces the density with outstanding precision, and the charge is conserved to five digits. The slightly larger relative error in \(q\) is an artefact of the tiny flux amplitude (\(10^{-6}\)): the absolute error in \(q\) is only \(\sim 9\times10^{-8}\), well below the truncation error of the KT scheme.
+
+---
+
+## 3. Comparison with the KT convergence test
+
+The KT solver showed **perfect second‑order convergence** for Scenario 7 (\(Q\approx 2.0\)) and a **reduced order** (\(\approx 1.7\)) for Scenario 1, due to the minmod limiter activating in the steep transient. The PINN’s behaviour mirrors this: it excels in the smooth, near‑equilibrium regime but struggles when the solution is stiff and the limiter becomes active. The PINN’s difficulty with Scenario 1 is thus not a failure of the method, but a reflection of the genuine mathematical stiffness of the equations when the current is spacelike.
+
+---
+
+## 4. Conclusion
+
+The initial ratio \(\mathcal{J}/n\) is a practical predictor of PINN success. For ratios below \(\sim 0.1\) (timelike current), the network achieves high accuracy with minimal mask growth. For ratios above unity (spacelike current), the stiff relaxation transient severely degrades the solution, particularly the density field and charge conservation. These results reinforce the importance of matching the initial flux to the near‑equilibrium (Fick’s law) value when solving divergence‑type hydrodynamics with PINNs.
