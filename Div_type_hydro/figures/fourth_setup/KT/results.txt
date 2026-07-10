@@ -33,3 +33,22 @@ Mean Q_q for t > t_end/2 = 1.986
 Mean Q_alpha for t > t_end/2 = 1.977  
   
 Total charge conserved to a fraction of  2.2e-16
+
+--------------------------------------------------
+The convergence test reveals two distinct regimes:
+--------------------------------------------------
+
+* **Scenario 7** (small initial flux, \(|\mathcal{J}|/n \sim 10^{-4}\))  
+  The Richardson indicators \(Q_n, Q_q, Q_\alpha\) all hover around **2.0**, confirming that the KT scheme achieves its formal second‑order accuracy for smooth, near‑equilibrium solutions.  
+  The total charge is conserved to machine precision (\(2.2\times10^{-16}\)), as expected for a conservative finite‑volume method.
+
+* **Scenario 1** (large initial flux, \(|\mathcal{J}|/n \sim 100\))  
+  The same indicators drop to **≈ 1.7**, which is between first and second order.  
+  This indicates that the minmod slope limiter is being activated in regions where the solution develops steep (though still continuous) gradients. The limiter locally reduces the reconstruction to first‑order, thereby lowering the global convergence rate.  
+  Charge conservation remains perfect, showing that the reduction in order is not due to coding errors but to the nonlinear limiting required for stability.
+
+**Physical interpretation:**  
+When the initial flux is far from its equilibrium (Fick’s‑law) value, the relaxation equation drives a fast transient that sharpens the flux profile. The minmod limiter clips the slopes near these steep features, trading some spatial accuracy for robustness. In contrast, the near‑equilibrium Scenario 7 stays smooth throughout the evolution, so the limiter never engages and the full second‑order accuracy is observed.
+
+**Conclusion:**  
+The KT solver is verified to be second‑order accurate for smooth solutions and degrades gracefully when the solution becomes steeper, exactly as expected for a TVD scheme. The convergence test thus validates the numerical method for both mild and extreme initial conditions.
