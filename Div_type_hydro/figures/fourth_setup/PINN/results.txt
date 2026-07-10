@@ -72,3 +72,13 @@ Adam complete. Best loss = 3.042e-09
 L‑BFGS init loss: 6.187e-10
 
 Charge conserved up to a fraction of 2.1e-05
+
+L² error
+
+Grids differ: remapping KT → PINN grid …
+Relative L²(n) over spacetime = 4.337022e-04
+Relative L²(J) over spacetime = 9.054250e-02
+[saved] ./L2_results_DivType.txt
+
+[saved] plots/setup_2/PINN_vs_KT.pdf
+[saved] plots/setup_2/Field_differences.pdf
