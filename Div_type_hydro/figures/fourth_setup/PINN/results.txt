@@ -1,3 +1,51 @@
+Scenario 1 
+
+sing device: cuda
+Scales: sq=1.100e+00, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.14593817293643951
+R2 rms = 119.31134796142578
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=3.422e+02, R1_rms=6.405e-01, R2_rms=1.346e+00, mask_mean=21.46, lr=2.000e-03 | caus_min=1.709e+00
+Epoch 2000/25000 | loss=1.678e+02, R1_rms=6.241e-02, R2_rms=1.277e+00, mask_mean=47.27, lr=8.000e-04 | caus_min=2.267e+00
+Epoch 3000/25000 | loss=1.261e+02, R1_rms=3.620e-02, R2_rms=9.873e-01, mask_mean=76.59, lr=1.280e-04 | caus_min=2.039e+00
+Epoch 4000/25000 | loss=2.048e+01, R1_rms=6.264e-02, R2_rms=4.231e-01, mask_mean=106.45, lr=1.280e-04 | caus_min=2.011e+00
+Epoch 5000/25000 | loss=1.030e+01, R1_rms=5.797e-02, R2_rms=2.055e-01, mask_mean=135.15, lr=1.280e-04 | caus_min=1.990e+00
+Epoch 6000/25000 | loss=7.109e+00, R1_rms=5.229e-02, R2_rms=1.718e-01, mask_mean=162.97, lr=1.280e-04 | caus_min=2.051e+00
+Epoch 7000/25000 | loss=6.873e+00, R1_rms=5.110e-02, R2_rms=2.581e-01, mask_mean=189.90, lr=1.280e-04 | caus_min=2.063e+00
+Epoch 8000/25000 | loss=1.937e+01, R1_rms=5.057e-02, R2_rms=2.313e-01, mask_mean=216.36, lr=1.280e-04 | caus_min=2.034e+00
+Epoch 9000/25000 | loss=5.092e+00, R1_rms=5.039e-02, R2_rms=1.216e-01, mask_mean=242.80, lr=5.120e-05 | caus_min=2.031e+00
+Epoch 10000/25000 | loss=5.588e+00, R1_rms=4.983e-02, R2_rms=1.216e-01, mask_mean=269.56, lr=5.120e-05 | caus_min=2.021e+00
+Epoch 11000/25000 | loss=6.021e+00, R1_rms=4.930e-02, R2_rms=1.233e-01, mask_mean=296.22, lr=5.000e-05 | caus_min=2.005e+00
+Epoch 12000/25000 | loss=5.354e+00, R1_rms=4.884e-02, R2_rms=9.930e-02, mask_mean=322.82, lr=5.000e-05 | caus_min=1.991e+00
+Epoch 13000/25000 | loss=7.806e+00, R1_rms=4.845e-02, R2_rms=1.252e-01, mask_mean=349.42, lr=5.000e-05 | caus_min=1.978e+00
+Epoch 14000/25000 | loss=8.302e+00, R1_rms=4.817e-02, R2_rms=1.380e-01, mask_mean=376.01, lr=5.000e-05 | caus_min=1.968e+00
+Epoch 15000/25000 | loss=9.096e+00, R1_rms=4.788e-02, R2_rms=1.233e-01, mask_mean=402.64, lr=5.000e-05 | caus_min=1.956e+00
+Epoch 16000/25000 | loss=6.374e+00, R1_rms=4.769e-02, R2_rms=1.071e-01, mask_mean=429.28, lr=5.000e-05 | caus_min=1.948e+00
+Epoch 17000/25000 | loss=7.587e+00, R1_rms=4.749e-02, R2_rms=9.231e-02, mask_mean=455.93, lr=5.000e-05 | caus_min=1.944e+00
+Epoch 18000/25000 | loss=9.638e+00, R1_rms=4.729e-02, R2_rms=1.185e-01, mask_mean=482.58, lr=5.000e-05 | caus_min=1.940e+00
+Epoch 19000/25000 | loss=5.352e+00, R1_rms=4.715e-02, R2_rms=9.236e-02, mask_mean=509.26, lr=5.000e-05 | caus_min=1.937e+00
+Epoch 20000/25000 | loss=1.111e+01, R1_rms=4.703e-02, R2_rms=9.945e-02, mask_mean=535.94, lr=5.000e-05 | caus_min=1.936e+00
+Epoch 21000/25000 | loss=8.097e+00, R1_rms=4.688e-02, R2_rms=1.096e-01, mask_mean=562.91, lr=5.000e-05 | caus_min=1.934e+00
+Epoch 22000/25000 | loss=7.287e+00, R1_rms=4.681e-02, R2_rms=8.985e-02, mask_mean=590.66, lr=5.000e-05 | caus_min=1.934e+00
+Epoch 23000/25000 | loss=1.063e+01, R1_rms=4.671e-02, R2_rms=8.425e-02, mask_mean=618.39, lr=5.000e-05 | caus_min=1.934e+00
+Epoch 24000/25000 | loss=6.804e+00, R1_rms=4.661e-02, R2_rms=8.906e-02, mask_mean=646.09, lr=5.000e-05 | caus_min=1.932e+00
+Epoch 25000/25000 | loss=9.485e+00, R1_rms=4.655e-02, R2_rms=7.654e-02, mask_mean=673.74, lr=5.000e-05 | caus_min=1.934e+00
+Adam complete. Best loss = 4.268e+00
+L‑BFGS init loss: 1.661e-02
+L‑BFGS done. best=4.944e-03, calls=1000
+Times: Adam 488.4s  L‑BFGS 101.4s  total 589.8s
+
+./pinn_runs/divtype_pinn_20260710_162110.npz
+Charge conserved up to a fraction of 7.0e-02
+
+L² error
+
+Grids differ: remapping KT → PINN grid …
+Relative L²(n) over spacetime = 5.711944e-01
+Relative L²(q) over spacetime = 5.070994e-03
+[saved] ./L2_results_DivType.txt
+
 Scenario 7
 
 Using device: cuda
