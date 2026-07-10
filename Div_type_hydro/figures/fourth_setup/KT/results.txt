@@ -1,3 +1,22 @@
+KT
+
+Scenario 1 
+
+Running Nx=1000 ... done in 2.8s
+  Running Nx=2000 ... done in 4.5s
+  Running Nx=4000 ... done in 10.0s
+
+Wall‑clock times:
+  Nx= 1000: 2.75 s
+  Nx= 2000: 4.52 s
+  Nx= 4000: 10.02 s
+  
+Mean Q_n for t > t_end/2 = 1.699
+Mean Q_q for t > t_end/2 = 1.673
+Mean Q_alpha for t > t_end/2 = 1.686  
+  
+Total charge conserved to a fraction of  2.2e-16
+
 Scenario 7 
 
 Running Nx=1000 ... done in 2.7s
