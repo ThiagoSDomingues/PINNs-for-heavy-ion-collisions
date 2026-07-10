@@ -1,0 +1,74 @@
+Scenario 7
+
+Using device: cuda
+Scales: sq=1.100e-06, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.1535152643918991
+R2 rms = 0.00014654344704467803
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=1.159e-04, R1_rms=2.893e-03, R2_rms=2.359e-03, mask_mean=3.43, lr=5.000e-03 | caus_min=2.578e+00
+Epoch 2000/25000 | loss=1.315e-04, R1_rms=9.864e-04, R2_rms=4.316e-04, mask_mean=4.39, lr=5.000e-03 | caus_min=2.590e+00
+Epoch 3000/25000 | loss=3.659e-05, R1_rms=7.956e-04, R2_rms=1.793e-04, mask_mean=4.93, lr=2.000e-03 | caus_min=2.600e+00
+Epoch 4000/25000 | loss=1.752e-06, R1_rms=8.146e-05, R2_rms=7.517e-05, mask_mean=5.01, lr=8.000e-04 | caus_min=2.599e+00
+Epoch 5000/25000 | loss=6.052e-06, R1_rms=2.912e-04, R2_rms=8.607e-05, mask_mean=5.03, lr=8.000e-04 | caus_min=2.596e+00
+Epoch 6000/25000 | loss=4.356e-07, R1_rms=1.298e-04, R2_rms=4.090e-05, mask_mean=5.04, lr=3.200e-04 | caus_min=2.598e+00
+Epoch 7000/25000 | loss=4.209e-07, R1_rms=1.257e-04, R2_rms=4.449e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.600e+00
+Epoch 8000/25000 | loss=1.244e-07, R1_rms=1.009e-04, R2_rms=3.837e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.598e+00
+Epoch 9000/25000 | loss=2.326e-08, R1_rms=7.386e-05, R2_rms=3.047e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.600e+00
+Epoch 10000/25000 | loss=4.978e-08, R1_rms=2.584e-05, R2_rms=2.420e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 11000/25000 | loss=5.374e-08, R1_rms=2.479e-05, R2_rms=2.153e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 12000/25000 | loss=1.507e-07, R1_rms=4.209e-05, R2_rms=2.015e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.600e+00
+Epoch 13000/25000 | loss=1.426e-07, R1_rms=6.030e-05, R2_rms=1.917e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 14000/25000 | loss=5.422e-08, R1_rms=4.943e-05, R2_rms=1.856e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.600e+00
+Epoch 15000/25000 | loss=1.681e-08, R1_rms=2.726e-05, R2_rms=1.766e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 16000/25000 | loss=2.713e-08, R1_rms=2.962e-05, R2_rms=1.723e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 17000/25000 | loss=2.033e-08, R1_rms=2.751e-05, R2_rms=1.695e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 18000/25000 | loss=2.312e-08, R1_rms=2.908e-05, R2_rms=1.661e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 19000/25000 | loss=1.569e-08, R1_rms=2.589e-05, R2_rms=1.612e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 20000/25000 | loss=4.287e-09, R1_rms=1.971e-05, R2_rms=1.588e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 21000/25000 | loss=5.320e-09, R1_rms=1.760e-05, R2_rms=1.557e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 22000/25000 | loss=2.476e-08, R1_rms=2.067e-05, R2_rms=1.536e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 23000/25000 | loss=2.758e-08, R1_rms=2.602e-05, R2_rms=1.509e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 24000/25000 | loss=8.184e-09, R1_rms=2.280e-05, R2_rms=1.488e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 25000/25000 | loss=1.119e-08, R1_rms=2.535e-05, R2_rms=1.504e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Adam complete. Best loss = 3.042e-09
+L‑BFGS init loss: 6.187e-10
+L‑BFGS done. best=4.262e-10, calls=498
+Times: Adam 483.6s  L‑BFGS 47.2s  total 530.8s
+
+
+Using device: cuda
+Scales: sq=1.100e-06, sA=1.160e+00
+Residual scales: n_scale=1.200e-02, alpha_scale=1.160e+00
+R1 rms = 0.1535152643918991
+R2 rms = 0.00014654344704467803
+Adam pre‑training (SA-PINN, hard IC, self‑adaptive mask)...
+Epoch 1000/25000 | loss=1.159e-04, R1_rms=2.893e-03, R2_rms=2.359e-03, mask_mean=3.43, lr=5.000e-03 | caus_min=2.578e+00
+Epoch 2000/25000 | loss=1.315e-04, R1_rms=9.864e-04, R2_rms=4.316e-04, mask_mean=4.39, lr=5.000e-03 | caus_min=2.590e+00
+Epoch 3000/25000 | loss=3.659e-05, R1_rms=7.956e-04, R2_rms=1.793e-04, mask_mean=4.93, lr=2.000e-03 | caus_min=2.600e+00
+Epoch 4000/25000 | loss=1.752e-06, R1_rms=8.146e-05, R2_rms=7.517e-05, mask_mean=5.01, lr=8.000e-04 | caus_min=2.599e+00
+Epoch 5000/25000 | loss=6.052e-06, R1_rms=2.912e-04, R2_rms=8.607e-05, mask_mean=5.03, lr=8.000e-04 | caus_min=2.596e+00
+Epoch 6000/25000 | loss=4.356e-07, R1_rms=1.298e-04, R2_rms=4.090e-05, mask_mean=5.04, lr=3.200e-04 | caus_min=2.598e+00
+Epoch 7000/25000 | loss=4.209e-07, R1_rms=1.257e-04, R2_rms=4.449e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.600e+00
+Epoch 8000/25000 | loss=1.244e-07, R1_rms=1.009e-04, R2_rms=3.837e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.598e+00
+Epoch 9000/25000 | loss=2.326e-08, R1_rms=7.386e-05, R2_rms=3.047e-05, mask_mean=5.05, lr=3.200e-04 | caus_min=2.600e+00
+Epoch 10000/25000 | loss=4.978e-08, R1_rms=2.584e-05, R2_rms=2.420e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 11000/25000 | loss=5.374e-08, R1_rms=2.479e-05, R2_rms=2.153e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 12000/25000 | loss=1.507e-07, R1_rms=4.209e-05, R2_rms=2.015e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.600e+00
+Epoch 13000/25000 | loss=1.426e-07, R1_rms=6.030e-05, R2_rms=1.917e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.599e+00
+Epoch 14000/25000 | loss=5.422e-08, R1_rms=4.943e-05, R2_rms=1.856e-05, mask_mean=5.06, lr=1.280e-04 | caus_min=2.600e+00
+Epoch 15000/25000 | loss=1.681e-08, R1_rms=2.726e-05, R2_rms=1.766e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 16000/25000 | loss=2.713e-08, R1_rms=2.962e-05, R2_rms=1.723e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 17000/25000 | loss=2.033e-08, R1_rms=2.751e-05, R2_rms=1.695e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 18000/25000 | loss=2.312e-08, R1_rms=2.908e-05, R2_rms=1.661e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 19000/25000 | loss=1.569e-08, R1_rms=2.589e-05, R2_rms=1.612e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 20000/25000 | loss=4.287e-09, R1_rms=1.971e-05, R2_rms=1.588e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 21000/25000 | loss=5.320e-09, R1_rms=1.760e-05, R2_rms=1.557e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 22000/25000 | loss=2.476e-08, R1_rms=2.067e-05, R2_rms=1.536e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 23000/25000 | loss=2.758e-08, R1_rms=2.602e-05, R2_rms=1.509e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Epoch 24000/25000 | loss=8.184e-09, R1_rms=2.280e-05, R2_rms=1.488e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.600e+00
+Epoch 25000/25000 | loss=1.119e-08, R1_rms=2.535e-05, R2_rms=1.504e-05, mask_mean=5.06, lr=5.120e-05 | caus_min=2.599e+00
+Adam complete. Best loss = 3.042e-09
+L‑BFGS init loss: 6.187e-10
+
+Charge conserved up to a fraction of 2.1e-05
