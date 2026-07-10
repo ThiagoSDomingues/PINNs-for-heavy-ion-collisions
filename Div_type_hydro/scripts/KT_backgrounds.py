@@ -31,7 +31,7 @@ def T_const_boost(t, x):
 
 @jit(nopython=True, cache=False)
 def v_const_boost(t, x):
-    return 0.1 * np.ones_like(x)
+    return 0.5 * np.ones_like(x)
 
 # -------------------------------------------------------------------
 # 3. Gaussian temperature bump (zero velocity)
